@@ -1,0 +1,1840 @@
+<meta charset="UTF-8">
+<title>AI Governance Dashboard — v2 (Screen Prototype &amp; Plan)</title>
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7;
+    --surface-1:#fcfcfb;
+    --surface-2:#ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --muted:#898781;
+    --grid:#e1e0d9;
+    --baseline:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6;   /* sanctioned / blue */
+    --series-2:#eb6834;   /* shadow / orange */
+    --good:#0ca30c;
+    --warning:#fab219;
+    --serious:#ec835a;
+    --critical:#d03b3b;
+    --good-bg:#e8f6e8;
+    --warning-bg:#fff5e0;
+    --critical-bg:#fbe9e9;
+    --coach-bg:#f0f2fb;
+    --coach-border:#c7cdec;
+    /* department categorical set for Chart 1's stacked breakdown — validated via
+       dataviz skill's validate_palette.js (light+dark, adjacent-pair CVD safe);
+       reuses the skill's reference categorical order, slots 1/3/4/5/6/7 (skipping
+       slot 2 "orange" and slot 8 "red", already meaning "shadow" and "critical"
+       elsewhere in this file) */
+    --dept-1:#2a78d6;  /* Marketing */
+    --dept-2:#1baf7a;  /* IT / Ops */
+    --dept-3:#eda100;  /* Engineering */
+    --dept-4:#e87ba4;  /* Sales */
+    --dept-5:#008300;  /* Customer Success */
+    --dept-6:#4a3aa7;  /* Product & Design */
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d;
+      --surface-1:#1a1a19;
+      --surface-2:#212120;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --muted:#898781;
+      --grid:#2c2c2a;
+      --baseline:#383835;
+      --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5;
+      --series-2:#d95926;
+      --good:#0ca30c;
+      --warning:#fab219;
+      --serious:#ec835a;
+      --critical:#e66767;
+      --good-bg:#132414;
+      --warning-bg:#2b2410;
+      --critical-bg:#2b1414;
+      --coach-bg:#181c2e;
+      --coach-border:#333a5c;
+      --dept-1:#3987e5;
+      --dept-2:#199e70;
+      --dept-3:#c98500;
+      --dept-4:#d55181;
+      --dept-5:#008300;
+      --dept-6:#9085e9;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d;
+    --surface-1:#1a1a19;
+    --surface-2:#212120;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --muted:#898781;
+    --grid:#2c2c2a;
+    --baseline:#383835;
+    --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5;
+    --series-2:#d95926;
+    --good:#0ca30c;
+    --warning:#fab219;
+    --serious:#ec835a;
+    --critical:#e66767;
+    --good-bg:#132414;
+    --warning-bg:#2b2410;
+    --critical-bg:#2b1414;
+    --coach-bg:#181c2e;
+    --coach-border:#333a5c;
+    --dept-1:#3987e5;
+    --dept-2:#199e70;
+    --dept-3:#c98500;
+    --dept-4:#d55181;
+    --dept-5:#008300;
+    --dept-6:#9085e9;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--page);
+    color:var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height:1.6;
+    margin:0;
+    padding:40px 20px 80px;
+  }
+  .doc{
+    max-width:980px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .eyebrow{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  h1{
+    font-size:28px;
+    line-height:1.15;
+    margin:6px 0 4px;
+    text-wrap:balance;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    color:var(--text-secondary);
+    font-size:15px;
+    max-width:65ch;
+  }
+  .header-row{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:16px; flex-wrap:wrap;
+  }
+  .author-card{
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+    border:1px solid var(--border); border-radius:8px; background:var(--surface-1);
+    padding:6px 12px 6px 6px;
+  }
+  .author-badge{
+    width:28px; height:28px; border-radius:7px; flex-shrink:0;
+    background:var(--series-1); color:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; letter-spacing:0.02em;
+  }
+  .author-name{
+    font-size:14px; font-weight:600; color:var(--text-primary);
+  }
+  h2{
+    font-size:19px;
+    margin:0 0 4px;
+    letter-spacing:-0.005em;
+  }
+  h3{
+    font-size:14px;
+    margin:0 0 6px;
+    color:var(--text-primary);
+  }
+  /* anchor targets (#framing, #part-1, #part-2, #part-3) need clearance so the
+     sticky .topnav (~58px tall once stuck) doesn't cover the title after a jump */
+  section[id]{scroll-margin-top:76px;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:10px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:8px;
+  }
+  .section-tag{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--surface-1);
+    background:var(--series-1);
+    padding:3px 8px;
+    border-radius:4px;
+    flex-shrink:0;
+  }
+  p{margin:0 0 10px; color:var(--text-secondary); font-size:14.5px;}
+  .lede{color:var(--text-primary); font-size:15px;}
+
+  /* ---- coaching callout ---- */
+  .coach{
+    background:var(--coach-bg);
+    border:1px solid var(--coach-border);
+    border-radius:10px;
+    padding:16px 20px;
+  }
+  .coach .eyebrow{color:var(--series-1);}
+  .coach h2{margin-top:2px;}
+  .coach ul{margin:10px 0 0; padding-left:20px; display:flex; flex-direction:column; gap:8px;}
+  .coach li{font-size:14px; color:var(--text-primary);}
+  .coach li b{color:var(--text-primary);}
+  .coach li span{color:var(--text-secondary);}
+
+  /* ---- persona / framing cards ---- */
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .card{
+    background:var(--surface-1);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .card .role{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); font-weight:700;}
+  .card .who{font-size:15px; font-weight:700; margin:4px 0 6px;}
+  .card .decision{font-size:13.5px; color:var(--text-secondary);}
+
+  /* ---- persona header ---- */
+  .persona-header{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:10px;
+    padding:18px 22px; display:flex; flex-direction:column; gap:10px;
+  }
+  .persona-id{display:flex; align-items:center; gap:14px;}
+  .avatar{
+    width:44px; height:44px; border-radius:10px; flex-shrink:0;
+    background:var(--series-1); color:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:700; letter-spacing:0.02em;
+  }
+  .persona-name{font-size:19px; font-weight:700; letter-spacing:-0.005em;}
+  .persona-meta{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .persona-header .snapshot{font-size:14px; color:var(--text-secondary); max-width:66ch;}
+  .core-job{
+    display:flex; align-items:baseline; gap:8px; font-size:13.5px;
+    background:var(--surface-2); border-left:3px solid var(--series-1);
+    border-radius:0 8px 8px 0; padding:9px 13px; color:var(--text-secondary);
+  }
+  .core-job b{color:var(--text-primary); flex-shrink:0;}
+
+  /* ---- three decisions ---- */
+  .decision-row{display:grid; grid-template-columns:repeat(3,1fr); gap:0;}
+  .decision-card{
+    padding:14px 16px; display:flex; flex-direction:column; gap:8px;
+    border-right:1px solid var(--grid);
+  }
+  .decision-card:last-child{border-right:none;}
+  .decision-num{
+    width:24px; height:24px; border-radius:50%; flex-shrink:0;
+    background:var(--series-1); color:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700;
+  }
+  .decision-top{display:flex; align-items:center; gap:10px;}
+  .decision-title{font-size:14px; font-weight:700;}
+  .decision-card ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px;}
+  .decision-card li{font-size:12.5px; color:var(--text-secondary);}
+
+  /* ---- pain points (plain list, not individually-bordered tiles) ---- */
+  .pain-list{display:flex; flex-direction:column; padding:4px 16px;}
+  .pain-row{
+    display:flex; gap:16px; padding:9px 0; border-bottom:1px solid var(--grid);
+  }
+  .pain-row:last-child{border-bottom:none;}
+  .pain-row .label{
+    font-size:12.5px; font-weight:700; color:var(--text-primary);
+    width:190px; flex-shrink:0;
+  }
+  .pain-row .desc{font-size:12.5px; color:var(--muted); line-height:1.5;}
+
+  /* ---- what they need to see ---- */
+  .need-list{padding:4px 16px;}
+  .need-row{
+    display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    padding:10px 0; border-bottom:1px solid var(--grid);
+  }
+  .need-row:last-child{border-bottom:none;}
+  .need-row .k{font-size:13px; font-weight:700; color:var(--text-primary); flex:0 0 110px;}
+  .need-row .v{font-size:13px; color:var(--text-secondary); text-align:right; flex:1;}
+
+  /* ---- design implication ---- */
+  .implication{
+    background:var(--surface-1); border:1px dashed var(--border); border-radius:10px;
+    padding:12px 16px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .implication p{flex:1; min-width:220px; font-size:13.5px; color:var(--text-secondary); margin:0;}
+  .implication p b{color:var(--text-primary);}
+  .loop{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+  .loop-step{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    color:var(--series-1); background:var(--surface-2); border:1px solid var(--border);
+    border-radius:999px; padding:6px 12px;
+  }
+  .loop-sep{color:var(--muted); font-size:12px;}
+  /* shared enclosure for the persona sub-blocks — one bordered shell (mirrors
+     .charts-section) instead of each sub-block carrying its own independent
+     card/border style, so "Three decisions," "Current pain points," and
+     "User needs" read as one persona brief rather than three mismatched pieces */
+  .persona-block{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+    margin-top:12px; overflow:hidden;
+  }
+  .persona-block > div{border-bottom:1px solid var(--border);}
+  .persona-block > div:last-child{border-bottom:none;}
+  .persona-block h3{
+    font-size:12px; margin:0; padding:11px 16px; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--muted); font-weight:700; background:var(--surface-1); border-bottom:1px solid var(--grid);
+  }
+
+  @media (max-width:720px){
+    .decision-row{grid-template-columns:1fr;}
+    .pain-row{flex-direction:column; gap:2px;}
+    .pain-row .label{width:auto;}
+    .need-row{flex-direction:column; gap:2px;}
+    .need-row .v{text-align:left;}
+  }
+
+  /* ---- table of contents (sticky top navbar) ---- */
+  /* position:sticky, not fixed — sits in normal document flow above .doc, so it
+     never needs .doc to narrow or any viewport-relative gutter math. Replaces the
+     fixed-position side rail (Rounds 1-6), which required narrowing .doc on medium
+     viewports and caused a chain of breakpoint/overflow bugs as a result. */
+  .topnav{
+    position:sticky; top:0; z-index:10;
+    display:flex; gap:22px; overflow-x:auto;
+    background:var(--page); border-bottom:1px solid var(--border);
+    padding:12px 20px; margin:0 -20px 26px;
+  }
+  .toc-link{
+    font-size:13px; color:var(--muted); font-weight:500;
+    text-decoration:none; cursor:pointer; white-space:nowrap;
+    padding-bottom:10px; border-bottom:2px solid transparent;
+    transition:color 0.15s, border-color 0.15s;
+  }
+  .toc-link:hover{color:var(--text-secondary);}
+  .toc-link.active{color:var(--series-1); font-weight:700; border-bottom-color:var(--series-1);}
+  .jump-link{
+    display:inline-block; font-size:12.5px; color:var(--series-1); text-decoration:none;
+    margin-top:6px; font-weight:600;
+  }
+  .jump-link:hover{text-decoration:underline;}
+
+  /* ---- screen frame (the prototype) ---- */
+  .screenframe{
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    background:var(--surface-1);
+    position:relative;
+  }
+  .chrome{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--border);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--baseline);}
+  .chrome .url{
+    margin-left:10px;
+    font-size:12px;
+    color:var(--muted);
+    font-family: ui-monospace, monospace;
+  }
+  .screen{padding:24px 26px 30px;}
+  .screen-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; gap:12px; flex-wrap:wrap;}
+  .screen-title{font-size:18px; font-weight:700;}
+  .screen-sub{font-size:12.5px; color:var(--muted);}
+  .filters{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .filter{
+    font-size:12.5px; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--border); color:var(--text-secondary); background:var(--surface-2);
+    font-family:inherit; cursor:pointer; line-height:1.4;
+  }
+  .filter:hover{border-color:var(--series-1); color:var(--series-1);}
+  .filter.active{border-color:var(--series-1); color:var(--series-1); font-weight:600; background:var(--surface-2);}
+  select.filter{-webkit-appearance:none; appearance:none; padding-right:22px;
+    background-image:linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:calc(100% - 12px) 55%, calc(100% - 8px) 55%; background-size:4px 4px, 4px 4px; background-repeat:no-repeat;}
+  .range-note{font-size:11.5px; color:var(--muted); margin:-8px 0 16px;}
+  .filter-scope-note{font-size:11px; color:var(--muted); margin:2px 0 0 2px;}
+  /* visual confirmation that a component responded to the department filter — only
+     shown while the filter is scoped away from "All departments"; charts never get
+     this class, since the filter is deliberately not wired to them (see Part 3 note) */
+  .filter-scoped{border-left:3px solid var(--series-1);}
+  .table-wrap.filter-scoped{padding-left:7px;}
+  .attn-panel.filter-scoped{border-left:3px solid var(--series-1);}
+
+  /* ---- needs-attention panel (exception feed, below the KPI strip) ---- */
+  .attn-panel{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden;}
+  .attn-head{display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-bottom:1px solid var(--grid); background:var(--surface-1);}
+  .attn-title{font-size:13px; font-weight:700;}
+  .attn-count{font-size:11.5px; color:var(--muted); font-weight:600;}
+  .attn-chips{display:flex; gap:6px; padding:9px 16px; border-bottom:1px solid var(--grid); background:var(--surface-1); flex-wrap:wrap;}
+  .attn-chip{font:inherit; font-size:11.5px; font-weight:600; padding:4px 11px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-secondary); cursor:pointer;}
+  .attn-chip:hover{border-color:var(--series-1);}
+  .attn-chip:focus-visible{outline:2px solid var(--series-1); outline-offset:1px;}
+  .attn-chip.active{background:var(--series-1); border-color:var(--series-1); color:#fff;}
+  .attn-list{display:flex; flex-direction:column;}
+  .attn-row{display:flex; align-items:flex-start; flex-wrap:wrap; gap:12px; padding:11px 16px; border-bottom:1px solid var(--grid); cursor:pointer;}
+  .attn-row:last-child{border-bottom:none;}
+  .attn-row:hover{background:var(--surface-1);}
+  .attn-row:focus-visible{outline:2px solid var(--series-1); outline-offset:-2px;}
+  .attn-note{display:none; flex-basis:100%; font-size:11.5px; color:var(--muted); font-style:italic; padding-left:20px; margin-top:2px;}
+  .attn-note.open{display:block;}
+  .attn-sev{width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0;}
+  .attn-sev.critical{background:var(--critical);}
+  .attn-sev.warning{background:var(--warning);}
+  .attn-sev.info{background:var(--series-1);}
+  .attn-body{flex:1; min-width:0;}
+  .attn-line1{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .attn-tag{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:2px 7px; border-radius:999px; flex-shrink:0;}
+  .attn-tag.critical{background:var(--critical-bg); color:var(--critical);}
+  .attn-tag.warning{background:var(--warning-bg); color:#8a6200;}
+  .attn-tag.info{background:var(--coach-bg); color:var(--series-1);}
+  .attn-tool{font-size:13px; font-weight:700; color:var(--text-primary);}
+  .attn-desc{font-size:12px; color:var(--text-secondary); margin-top:2px;}
+  .attn-action{font-size:12px; font-weight:600; color:var(--series-1); flex-shrink:0; white-space:nowrap; padding-top:2px;}
+  .attn-empty{padding:16px; text-align:center; font-size:12.5px; color:var(--muted); font-style:italic;}
+  .attn-more{padding:10px 16px; text-align:center; font-size:12px; font-weight:600; color:var(--series-1); cursor:pointer; background:var(--surface-1);}
+  .attn-more:hover{text-decoration:underline;}
+  .attn-more:focus-visible{outline:2px solid var(--series-1); outline-offset:-2px;}
+  .attn-caption{font-size:11.5px; color:var(--muted); margin:-6px 0 16px;}
+
+  .kpi-head-row{display:flex; justify-content:space-between; align-items:center; margin:18px 0 8px;}
+  .kpi-head-label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600;}
+  .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:10px;}
+  .kpi{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .kpi .label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;}
+  .kpi .value{font-size:23px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .kpi .value small{font-size:13px; font-weight:500; color:var(--text-secondary);}
+  .kpi .delta{font-size:12px; margin-top:4px; font-weight:600;}
+  .kpi .delta.warn{color:var(--critical);}
+  .kpi .delta.ok{color:var(--good);}
+  .kpi .delta.neutral{color:var(--muted); font-weight:500;}
+  /* .kpi-spark / .kpi-spark-caption: unused since the threshold-tile sparkline was removed
+     (see decisions.md) — flagged rather than deleted, per this project's dead-CSS precedent. */
+  .kpi-spark{display:block; margin-top:8px;}
+  .kpi-spark-caption{font-size:10px; color:var(--muted); margin-top:2px;}
+  .kpi-spark-caption.warn{color:var(--critical); font-weight:700; font-size:11px;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--grid);
+    white-space:nowrap;
+  }
+  td{padding:10px 10px; border-bottom:1px solid var(--grid); vertical-align:middle; font-variant-numeric:tabular-nums;}
+  tr:last-child td{border-bottom:none;}
+  .tool-name{font-weight:600; font-variant-numeric:normal;}
+  .tool-owner{color:var(--muted); font-size:11.5px; display:block; font-variant-numeric:normal;}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;
+  }
+  .pill.good{background:var(--good-bg); color:var(--good);}
+  .pill.warning{background:var(--warning-bg); color:#8a6200;}
+  .pill.critical{background:var(--critical-bg); color:var(--critical);}
+  .pill.neutral{background:var(--surface-1); color:var(--text-secondary);}
+  .pill.sanctioned{background:var(--good-bg); color:var(--good);}
+  .pill.shadow{background:var(--warning-bg); color:#8a6200;}
+  .pill::before{content:"●"; font-size:8px;}
+  .trend-cell{font-weight:600; font-variant-numeric:tabular-nums;}
+  .trend-cell.warning{color:#8a6200;}
+  .trend-cell.good{color:var(--good);}
+  .trend-cell.neutral{color:var(--muted); font-weight:500;}
+  .table-wrap{overflow-x:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:4px 10px; margin-bottom:8px;}
+  .pct-bar{width:64px; height:6px; border-radius:3px; background:var(--grid); overflow:hidden; display:inline-block; margin-left:6px; vertical-align:middle;}
+  .pct-bar i{display:block; height:100%; border-radius:3px;}
+  .tool-row{cursor:pointer;}
+  .tool-row:hover{background:var(--surface-1);}
+  .tool-row:focus-visible{outline:2px solid var(--series-1); outline-offset:-2px;}
+  .row-chevron{color:var(--muted); font-size:13px; text-align:right; transition:transform .15s ease;}
+  .tool-row[aria-expanded="true"] .row-chevron{transform:rotate(90deg);}
+  .tool-note-row{display:none;}
+  .tool-note-row.open{display:table-row;}
+  .tool-note-row td{color:var(--muted); font-size:11.5px; font-style:italic; padding:6px 10px 10px; border-bottom:1px solid var(--grid);}
+  .empty-row td{color:var(--muted); text-align:center; padding:22px 10px; font-style:italic;}
+  .table-caption{font-size:11.5px; color:var(--muted); margin:0 0 16px;}
+
+  /* shared enclosure for the charts group — one bordered shell (mirrors .attn-panel)
+     instead of each .chart-card carrying its own border, so the three charts read as
+     one grouped section (Gestalt common region) rather than three independent cards
+     stacked next to the Needs Attention panel and table, which used the same per-item
+     border style */
+  .charts-section{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden;}
+  .charts-head{padding:11px 16px; border-bottom:1px solid var(--grid); background:var(--surface-1);}
+  .charts-title{font-size:13px; font-weight:700;}
+  .charts-grid{display:grid; grid-template-columns:1fr 1fr; gap:0; padding:12px 16px 14px;}
+  .chart-card{
+    padding:12px 16px 10px; grid-column: span 1;
+  }
+  .chart-card.wide{grid-column:1 / -1; padding-left:4px; padding-right:4px; border-bottom:1px solid var(--grid);}
+  /* chart 1 (wide) sits above the chart2/chart3 row; a divider under it separates
+     the two rows, and one between chart2/chart3 separates the columns — neither
+     card gets its own full border, only these internal dividers */
+  .chart-card.wide + .chart-card{border-right:1px solid var(--grid);}
+  .chart-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .chart-title{font-size:13.5px; font-weight:700;}
+  .chart-note{font-size:11.5px; color:var(--muted);}
+  .legend{display:flex; gap:14px; font-size:11.5px; color:var(--text-secondary); margin-top:6px;}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+  svg text{font-family: system-ui, -apple-system, sans-serif;}
+  .axis-label{fill:var(--muted); font-size:9.5px;}
+  .grid-line{stroke:var(--grid); stroke-width:1;}
+  /* fluid width + aspect-ratio (not a fixed pixel height) so the chart scales as one
+     unit on narrow viewports instead of the width/height stretching independently */
+  .chart-svg{display:block; width:100%; height:auto;}
+  .chart-card .chart-svg{aspect-ratio:320/230;}
+  .chart1-body .chart-svg{aspect-ratio:460/210; flex:1 1 auto; min-width:0;}
+  .chart-methodology{font-size:10.5px; color:var(--muted); font-style:italic; margin-top:6px;}
+  /* Chart 1: bars + right-side department selector, side by side */
+  .chart1-body{display:flex; gap:8px; align-items:flex-start;}
+  .dept-list-wrap{flex:0 0 130px; padding-top:6px;}
+  .dept-list-label{font-size:10.5px; color:var(--muted); font-style:italic; margin:0 0 4px 2px;}
+  .dept-list{display:flex; flex-direction:column; gap:4px;}
+  .dept-item{
+    display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--text-secondary);
+    padding:4px 5px; border-radius:6px; cursor:pointer; border:1px solid var(--border);
+    background:var(--surface-2); font-family:inherit; text-align:left; line-height:1.25; width:100%;
+    transition:border-color .12s ease, background .12s ease, color .12s ease;
+  }
+  .dept-item i{width:8px; height:8px; border-radius:2px; flex-shrink:0; display:inline-block;}
+  .dept-item span{flex:1; min-width:0;}
+  .dept-item .dept-amt{font-size:10px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; flex-shrink:0;}
+  .dept-item.active .dept-amt{color:var(--text-secondary);}
+  .dept-item:hover{background:var(--surface-1); border-color:var(--series-1);}
+  .dept-item.active{background:var(--surface-1); border-color:var(--border); color:var(--text-primary); font-weight:600;}
+  .dept-item:focus-visible{outline:2px solid var(--series-1); outline-offset:1px;}
+  .dept-list-sep{height:1px; background:var(--border); margin:4px 2px;}
+  .chart-takeaway{font-size:11.5px; color:var(--text-secondary); font-weight:600; margin-top:8px;}
+  .chart-scope-note{font-size:10.5px; color:var(--muted); font-style:italic; margin-top:6px;}
+  .chart-card .chart-takeaway + .chart-scope-note{margin-top:2px;}
+  .legend-toggle{display:inline-flex; align-items:center; gap:5px; cursor:pointer; -webkit-user-select:none; user-select:none;}
+  .legend-toggle input{margin:0; accent-color:var(--series-1); cursor:pointer;}
+  .legend-toggle.off{opacity:0.45;}
+  .chart-data{margin-top:8px;}
+  .chart-data summary{font-size:11px; color:var(--series-1); cursor:pointer; font-weight:600;}
+  .chart-data summary:hover{text-decoration:underline;}
+  .chart-data-table{width:100%; border-collapse:collapse; font-size:11.5px; margin-top:8px;}
+  .chart-data-table th{text-align:left; font-weight:600; color:var(--muted); padding:4px 8px 4px 0; border-bottom:1px solid var(--grid);}
+  .chart-data-table td{padding:4px 8px 4px 0; border-bottom:1px solid var(--grid); color:var(--text-secondary); font-variant-numeric:tabular-nums;}
+  .chart-data-table tr:last-child td{border-bottom:none;}
+  .baseline-line{stroke:var(--baseline); stroke-width:1;}
+  .caption{font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+  /* ---- part 3 chart rationale cards ---- */
+  .rationale-grid{display:flex; flex-direction:column; gap:12px;}
+  .rationale{
+    display:grid; grid-template-columns:190px 1fr; gap:16px;
+    background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:14px 18px;
+    align-items:start;
+  }
+  .rationale .num{font-size:11px; color:var(--series-1); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;}
+  .rationale .name{font-size:14.5px; font-weight:700; margin:2px 0 4px;}
+  .rationale .job{font-size:12px; color:var(--muted);}
+  .rationale .why{font-size:13.5px; color:var(--text-secondary);}
+  .left-out{
+    background:var(--surface-1); border:1px dashed var(--border); border-radius:10px;
+    padding:14px 18px; font-size:13.5px; color:var(--text-secondary);
+  }
+  .left-out b{color:var(--text-primary);}
+
+  /* ---- api table ---- */
+  .api-group{margin-bottom:18px;}
+  .api-group h3{font-size:12.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--series-1); margin-bottom:8px;}
+  .api-table{width:100%; border-collapse:collapse; font-size:13px; background:var(--surface-1); border:1px solid var(--border); border-radius:10px; overflow:hidden;}
+  .api-table th{background:var(--surface-2);}
+  .api-table td, .api-table th{padding:9px 12px; border-bottom:1px solid var(--grid);}
+  .api-table tr:last-child td{border-bottom:none;}
+  .api-table .src{font-weight:600;}
+  .api-table .mech{color:var(--muted); font-size:12px;}
+  .recon{
+    margin-top:8px; font-size:13px; color:var(--text-secondary);
+    background:var(--surface-1); border-left:3px solid var(--series-1); padding:10px 14px; border-radius:0 8px 8px 0;
+  }
+  .group-why{font-size:13.5px; color:var(--text-secondary); margin:2px 0 10px;}
+  .read-more{font-size:12px; color:var(--muted); margin-top:6px;}
+  .read-more a{color:var(--series-1); text-decoration:none;}
+  .read-more a:hover{text-decoration:underline;}
+
+  .approach{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:10px;
+    padding:16px 18px; margin-bottom:18px;
+  }
+  .approach .eyebrow{color:var(--series-1); margin-bottom:6px;}
+  .dfv-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:10px 0 12px;}
+  .dfv{border:1px solid var(--border); border-radius:8px; padding:9px 12px; background:var(--surface-2);}
+  .dfv.active{border-color:var(--series-1);}
+  .dfv .term{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;}
+  .dfv.active .term{color:var(--series-1);}
+  .dfv .desc{font-size:12px; color:var(--text-secondary); margin-top:3px;}
+  .approach ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px;}
+  .approach li{font-size:13.5px; color:var(--text-secondary);}
+  .approach li b{color:var(--text-primary);}
+
+  .field-map{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px; min-width:230px;}
+  .field-map li{font-size:11.5px; color:var(--text-secondary); line-height:1.5;}
+  .field-map code{
+    background:var(--surface-2); border:1px solid var(--border); padding:1px 5px; border-radius:4px;
+    font-size:10.5px; font-family: ui-monospace, "SF Mono", monospace; color:var(--series-1);
+  }
+  .field-map .arrow{color:var(--muted); margin:0 3px;}
+  .field-map b{color:var(--text-primary); font-weight:600;}
+
+  footer{
+    text-align:center; font-size:11.5px; color:var(--muted); padding-top:10px; border-top:1px solid var(--border);
+  }
+
+  @media (max-width: 720px){
+    .cards{grid-template-columns:1fr;}
+    .kpi-row{grid-template-columns:1fr 1fr;}
+    .charts-grid{grid-template-columns:1fr;}
+    /* single-column fallback: the chart2/chart3 side-by-side divider becomes a stacked
+       divider instead, same as the wide card's bottom border */
+    .chart-card.wide + .chart-card{border-right:none; border-bottom:1px solid var(--grid);}
+    .rationale{grid-template-columns:1fr;}
+  }
+</style>
+
+<!-- ============ TOC (sticky top navbar) ============ -->
+<nav class="topnav" aria-label="Page sections">
+  <a class="toc-link" href="#framing" data-toc="framing">User Persona</a>
+  <a class="toc-link" href="#part-1" data-toc="part-1">Prototype</a>
+  <a class="toc-link" href="#part-2" data-toc="part-2">API &amp; Data Source Plan</a>
+  <a class="toc-link" href="#part-3" data-toc="part-3">Chart Rationale</a>
+</nav>
+
+<div class="doc">
+
+  <!-- ============ HEADER ============ -->
+  <div>
+    <div class="header-row">
+      <div>
+        <div class="eyebrow">Associate Product Manager · Take-home Assignment</div>
+        <h1>AI Governance Dashboard</h1>
+        <p class="subtitle">Monitor AI adoption, usage, spend, and governance across the organization</p>
+      </div>
+      <div class="author-card">
+        <div class="author-badge">SN</div>
+        <div class="author-name">Sakshi Negi</div>
+      </div>
+    </div>
+    <a class="jump-link" href="#part-1">Jump to the prototype ↓</a>
+  </div>
+
+  <!-- ============ FRAMING ============ -->
+  <section id="framing">
+    <div class="section-head"><span class="section-tag">Framing</span><h2>User Persona</h2></div>
+    <div class="persona-header">
+      <div class="persona-id">
+        <div class="avatar">IT</div>
+        <div>
+          <div class="persona-name">IT Operations Manager</div>
+          <div class="persona-meta">Primary persona · SaaS &amp; AI operations</div>
+        </div>
+      </div>
+      <p class="snapshot">Responsible for AI/SaaS access, usage policies, and organizational limits. Works with Security, Finance, Procurement, and team leads when intervention is required.</p>
+      <div class="core-job"><b>Core job</b><span>Keep AI adoption visible, controlled, and within approved boundaries.</span></div>
+    </div>
+
+    <div class="persona-block">
+      <div>
+        <h3>Three decisions</h3>
+        <div class="decision-row">
+          <div class="decision-card">
+            <div class="decision-top"><span class="decision-num">1</span><span class="decision-title">What needs my attention?</span></div>
+            <ul>
+              <li>Unapproved AI tools</li>
+              <li>Usage/spend approaching or exceeding limits</li>
+              <li>Significant changes in adoption or spend</li>
+            </ul>
+          </div>
+          <div class="decision-card">
+            <div class="decision-top"><span class="decision-num">2</span><span class="decision-title">Why is it happening?</span></div>
+            <ul>
+              <li>Which tool?</li>
+              <li>Which team/users?</li>
+              <li>What changed?</li>
+              <li>Is the activity approved?</li>
+            </ul>
+          </div>
+          <div class="decision-card">
+            <div class="decision-top"><span class="decision-num">3</span><span class="decision-title">What should I do?</span></div>
+            <ul>
+              <li>Monitor</li>
+              <li>Contact the team</li>
+              <li>Adjust the limit</li>
+              <li>Approve/restrict access</li>
+              <li>Escalate</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3>Current pain points</h3>
+        <div class="pain-list">
+          <div class="pain-row"><span class="label">Shadow AI is invisible</span><span class="desc">Employees adopt AI outside SSO and procurement, leaving IT without a complete view.</span></div>
+          <div class="pain-row"><span class="label">AI data is fragmented</span><span class="desc">Identity, usage, spend, and organizational data live across systems, making reconciliation manual.</span></div>
+          <div class="pain-row"><span class="label">Alerts lack context</span><span class="desc">"Copilot exceeded its limit" doesn't explain who or what drove the overage.</span></div>
+          <div class="pain-row"><span class="label">Governance is reactive</span><span class="desc">IT often discovers AI usage or overspend only after the problem has occurred.</span></div>
+          <div class="pain-row"><span class="label">Too many signals, no prioritization</span><span class="desc">Dozens of tools and alerts make it difficult to know what actually needs attention.</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h3>User needs</h3>
+        <div class="need-list">
+          <div class="need-row"><span class="k">Visibility</span><span class="v">Know what AI tools are being used across the organization.</span></div>
+          <div class="need-row"><span class="k">Control</span><span class="v">See usage and spend against approved limits.</span></div>
+          <div class="need-row"><span class="k">Early warning</span><span class="v">Spot unusual growth or approaching limits before they become problems.</span></div>
+          <div class="need-row"><span class="k">Attribution</span><span class="v">Know which teams or users are driving the activity.</span></div>
+          <div class="need-row"><span class="k">Governance</span><span class="v">Know whether each tool is approved and being used within policy.</span></div>
+          <div class="need-row"><span class="k">Confidence</span><span class="v">Understand where the data came from and whether it's reliable enough to act on.</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ EXECUTIVE TRANSLATION ============ -->
+  <!-- ============ PART 1: PROTOTYPE ============ -->
+  <section id="part-1">
+    <div class="section-head"><span class="section-tag">Part 1</span><h2>Prototype — AI Governance Dashboard, home screen</h2></div>
+    <div class="screenframe" id="screenframe">
+      <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="url">app.yourcompany.com/governance/ai-tools</span></div>
+      <div class="screen">
+        <div class="screen-top">
+          <div>
+            <div class="screen-title">AI Governance</div>
+            <div class="screen-sub">Org-wide AI tool usage &amp; spend · last synced 6 minutes ago</div>
+          </div>
+          <div class="filters">
+            <select class="filter" id="deptFilter" aria-label="Filter by department">
+              <option value="all">All departments</option>
+              <option value="IT / Ops">IT / Ops</option>
+              <option value="Product &amp; Design">Product &amp; Design</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Sales">Sales</option>
+              <option value="Customer Success">Customer Success</option>
+            </select>
+          </div>
+        </div>
+        <p class="filter-scope-note">Filters the Needs Attention list and table below — both always show current status, sliced by department. Not the charts above (Chart 1 has its own department drill-down; see Part 3).</p>
+
+        <div class="kpi-head-row">
+          <span class="kpi-head-label">Org-wide pulse</span>
+          <div class="filters kpi-range-filters">
+            <button type="button" class="filter" data-range="last7">Last 7 days</button>
+            <button type="button" class="filter active" data-range="mtd" id="rangeMtdBtn">Month to date</button>
+            <button type="button" class="filter" data-range="last90">Last 90 days</button>
+          </div>
+        </div>
+        <div class="kpi-row" id="kpiRow">
+          <div class="kpi">
+            <div class="label" id="kpiSpendLabel">AI spend, MTD</div>
+            <div class="value" id="kpiSpendValue">$184.2k <small id="kpiSpendOf">/ $210k budget</small></div>
+            <div class="delta warn" id="kpiSpendDelta">88% of budget · 12 days left in month</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Shadow AI</div>
+            <div class="value" id="kpiShadowValue">9 of 42 tools <small id="kpiShadowUsers">· 75 users</small></div>
+            <div class="delta warn" id="kpiShadowSub">+185% adoption since March</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Tools nearing / over limit</div>
+            <div class="value" id="kpiOverValue" style="color:var(--critical);">5 tools</div>
+            <div class="delta" id="kpiOverSub"><span style="color:var(--critical); font-weight:700;">2 over</span><span style="color:var(--muted); font-weight:500;"> · </span><span style="color:var(--warning); font-weight:700;">3 approaching</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label" id="kpiUsersLabel">Active AI users</div>
+            <div class="value" id="kpiUsersValue">1,240 <small id="kpiStaff">/ 2,100 staff</small></div>
+            <div class="delta ok" id="kpiUsersDelta">59% org adoption</div>
+          </div>
+        </div>
+        <p class="range-note">Shadow AI and "Tools nearing / over limit" always reflect current month-to-date standing; spend and active-user figures scale to the selected window above.</p>
+
+        <!-- needs-attention panel: one merged exception feed instead of three separate sections,
+             severity-ordered (critical → warning → info), threshold breaches visually distinguished
+             from adoption/spend anomalies, one inline action per row. Placed directly after the KPI
+             strip, above the fold and before the charts, so the KPIs orient scale/context first and
+             this feed immediately supplies the specific items to act on — the KPI-first,
+             exception-detail-second pattern, ahead of the supporting-detail charts below. -->
+        <div class="attn-panel" id="attnPanel">
+          <div class="attn-head">
+            <span class="attn-title">⚠ Needs attention</span>
+            <span class="attn-count" id="attnCount">7 items</span>
+          </div>
+          <div class="attn-chips" id="attnChips" role="group" aria-label="Filter by category">
+            <button type="button" class="attn-chip active" data-cat="all">All</button>
+            <button type="button" class="attn-chip" data-cat="threshold">Threshold</button>
+            <button type="button" class="attn-chip" data-cat="governance">Governance</button>
+            <button type="button" class="attn-chip" data-cat="anomaly">Anomaly</button>
+          </div>
+          <div class="attn-list" id="attnList"><!-- rendered by JS --></div>
+        </div>
+        <p class="attn-caption">Sorted by severity, not source — over-limit tools, unapproved tools, and adoption/spend anomalies share one feed so nothing gets missed by only checking one list. Click any item to see what a drill-down would additionally surface.</p>
+
+        <!-- charts: one shared bordered shell (.charts-section) instead of each chart
+             card carrying its own border, so the three charts read as one grouped
+             section — same pattern as .attn-panel above — rather than three independent
+             cards. Content-descriptive header, matching "⚠ Needs attention" above. -->
+        <div class="charts-section">
+          <div class="charts-head"><span class="charts-title">Spend &amp; adoption trends</span></div>
+          <div class="charts-grid">
+
+          <!-- Chart 1: monthly AI spend, org total by default; select a department on the
+               right to switch the same bars to that department's spend + its own limit -->
+          <div class="chart-card wide">
+            <div class="chart-head">
+              <div class="chart-title">1 · AI spend vs. approved limit</div>
+              <!-- scope readout — states what the chart is currently scoped to (org total
+                   or one department) directly under the title, per "visibility of system
+                   status": the department selector below is the input, this is the readout,
+                   so switching scope never leaves the user to infer why the $ limit changed -->
+              <div class="chart-note" id="spendScopeNote"><!-- rendered by JS --></div>
+            </div>
+            <div class="chart1-body">
+              <svg class="chart-svg" id="spendSvg" viewBox="0 0 460 210" role="img" aria-label="Bar chart of AI spend by month, March to August 2026, actual through July and projected for August. Shows the org-wide total by default; select a department on the right to see that department's spend and its own limit instead.">
+                <!-- y-axis gridlines + $ labels are rendered by JS (renderSpendChart), scaled to
+                     whatever is currently on screen — Total's ~240k range, or a much smaller
+                     department's own range — so bars never render tiny against a stale fixed scale -->
+                <g id="spendYAxis"></g>
+
+                <!-- populated by renderSpendChart(): limit line, bars, projection annotation,
+                     month labels — all re-render on department selection. No connecting trend
+                     line: bar height + position already carries the trend, so a line joining
+                     the bar tops was redundant encoding rather than new information. -->
+                <g id="spendLimitLine"></g>
+                <g id="spendPoints"></g>
+                <g id="spendAnnotation"></g>
+                <g id="spendMonthLabels"></g>
+              </svg>
+              <div class="dept-list-wrap">
+                <p class="dept-list-label">View spend by:</p>
+                <div class="dept-list" id="deptList" role="group" aria-label="Switch the chart to a single department's spend instead of the org total"><!-- rendered by JS --></div>
+              </div>
+            </div>
+            <div class="chart-methodology" id="spendCaption"><!-- rendered by JS --></div>
+            <details class="chart-data">
+              <summary>View data</summary>
+              <table class="chart-data-table">
+                <tr><th>Month</th><th>Marketing</th><th>IT / Ops</th><th>Engineering</th><th>Sales</th><th>Customer Success</th><th>Product &amp; Design</th><th>Total</th></tr>
+                <tbody id="spendDataBody"><!-- rendered by JS --></tbody>
+              </table>
+            </details>
+          </div>
+
+          <!-- Chart 2: indexed trend -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <div class="chart-title">2 · AI adoption: sanctioned vs. shadow</div>
+              <div class="chart-note">Indexed growth · Mar 2026 = 100</div>
+            </div>
+            <!-- axis: index 100 -> y155 (baseline), index 300 -> y20, evenly spaced at
+                 67.5px/100 units (0.675px per index point) so 100/200/300 land on grid
+                 correctly — both polylines below are plotted on this same scale, starting
+                 at y155 (index 100) to match the "Mar 2026 = 100" header exactly -->
+            <svg class="chart-svg" viewBox="0 0 320 230" width="100%" role="img" aria-label="Line chart comparing indexed growth of sanctioned and shadow AI tool active users from March to August 2026">
+              <g>
+                <line class="grid-line" x1="30" y1="20" x2="300" y2="20"/>
+                <line class="grid-line" x1="30" y1="87.5" x2="300" y2="87.5"/>
+                <line class="baseline-line" x1="30" y1="155" x2="300" y2="155"/>
+                <text class="axis-label" x="24" y="158" text-anchor="end">100</text>
+                <text class="axis-label" x="24" y="90.5" text-anchor="end">200</text>
+                <text class="axis-label" x="24" y="23" text-anchor="end">300</text>
+              </g>
+              <!-- shadow line (orange, solid) — index 100,139,178,222,258,285 -->
+              <g id="chart2ShadowLine">
+                <polyline points="30,155 84,128.7 138,102.4 192,72.7 246,48.4 300,30.1" fill="none" stroke="var(--series-2)" stroke-width="2"/>
+                <circle cx="300" cy="30.1" r="4" fill="var(--series-2)"><title>Shadow AI: index 285 (≈57 active users, Aug MTD)</title></circle>
+                <text x="266" y="24" font-size="10" fill="var(--series-2)" font-weight="700">+185%</text>
+              </g>
+              <!-- sanctioned line (blue, short-dash — secondary encoding beyond color per dataviz skill / CVD note) — index 100,110,121,132,142,156 -->
+              <g id="chart2SanctionedLine">
+                <polyline points="30,155 84,148.3 138,140.8 192,133.4 246,126.7 300,117.2" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-dasharray="6,3"/>
+                <circle cx="300" cy="117.2" r="4" fill="var(--series-1)"><title>Sanctioned AI: index 156 (≈812 active users, Aug MTD)</title></circle>
+                <text x="255" y="129" font-size="10" fill="var(--series-1)" font-weight="700">+56%</text>
+              </g>
+              <text class="axis-label" x="30" y="172" text-anchor="middle">Mar</text>
+              <text class="axis-label" x="300" y="172" text-anchor="middle">Aug</text>
+            </svg>
+            <div class="legend">
+              <label class="legend-toggle"><input type="checkbox" data-series="sanctioned" checked><i style="background:var(--series-1);"></i>Sanctioned · 812 users</label>
+              <label class="legend-toggle"><input type="checkbox" data-series="shadow" checked><i style="background:var(--series-2);"></i>Shadow AI · 75 users</label>
+            </div>
+            <div class="chart-takeaway">Shadow AI adoption is growing 3.3&times; faster than sanctioned adoption.</div>
+            <div class="chart-scope-note">Org-wide &middot; not filtered by department</div>
+            <details class="chart-data">
+              <summary>View data</summary>
+              <table class="chart-data-table">
+                <tr><th>Month</th><th>Sanctioned (index)</th><th>Shadow (index)</th></tr>
+                <tr><td>Mar</td><td>100</td><td>100</td></tr>
+                <tr><td>Apr</td><td>110</td><td>139</td></tr>
+                <tr><td>May</td><td>121</td><td>178</td></tr>
+                <tr><td>Jun</td><td>132</td><td>222</td></tr>
+                <tr><td>Jul</td><td>142</td><td>258</td></tr>
+                <tr><td>Aug</td><td>156</td><td>285</td></tr>
+              </table>
+            </details>
+          </div>
+
+          <!-- Chart 3: AI budget vs. shadow spend by dept. Bars = MTD spend (sanctioned + shadow
+               stacked), on one shared $ axis so budget size stays comparable across departments
+               (no per-dept normalization — same reasoning Chart 1 uses for its own axis). Solid
+               tick = that department's DEPT_LIMIT budget; a bar crossing its own tick reads as
+               over budget, reinforced with a second (color) channel on the tick itself, not
+               position alone, per the same CVD-safety practice used on Chart 2's line styles.
+               Per-bar label shows spend relative to budget (over/remaining), not the raw MTD
+               total — pairs with the ranking below to answer "how urgent" alongside "who's worst."
+               Ranked by shadow ratio (not raw $) so the chart still answers "where to act first"
+               rather than just "which department is biggest" — a large budget dept with a small
+               shadow ratio (e.g. IT / Ops) stays at the bottom despite having the longest bar.
+               Sanctioned/shadow colors reuse Chart 2's --series-1/--series-2 pair for one
+               consistent color meaning across both charts.
+               Derivation for the numbers below (hand-authored, not computed at runtime, to match
+               DEPT_LIMIT/DEPT_SHARE's convention): dept MTD spend = DEPT_SHARE × the $184.2k MTD
+               KPI (sums back to $184.2k exactly); shadow $ = that spend × this chart's own
+               previously-published shadow ratio per department. Budget = existing DEPT_LIMIT.
+                 Dept              Budget   MTD spend  Shadow $   Shadow %
+                 Marketing         $42.0k   $51.6k     $22.5k     43.7%
+                 Customer Success  $29.0k   $18.4k     $6.1k      33.3%
+                 Sales             $40.0k   $25.8k     $5.8k      22.5%
+                 Engineering       $54.0k   $33.2k     $2.0k      6.0%
+                 Product & Design  $23.0k   $14.7k     $0.4k      2.5%
+                 IT / Ops          $62.0k   $40.5k     $0         0% -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <div class="chart-title">3 · AI spend vs. budget, by department</div>
+              <div class="chart-note">Spend this month &middot; sanctioned + shadow &middot; vs. department budget</div>
+            </div>
+            <!-- viewBox widened to 400 (from 320) purely to give the per-bar label room —
+                 bars/gridlines/dept names keep their original 0-246 coordinates unchanged;
+                 the extra 80 units all go to the label zone (x=256 to 390), which the
+                 combined "over/remaining · shadow%" text needs (measured up to ~126 units
+                 wide at font-size 8; the old two-line labels fit in the original 64-unit
+                 zone, the new single-line ones don't) -->
+            <svg class="chart-svg" viewBox="0 0 400 230" style="aspect-ratio:400/230;" width="100%" role="img" aria-label="Stacked bar chart of each department's month-to-date AI spend, split into sanctioned and shadow, against that department's own monthly AI budget marked with a tick; shadow-spend ratio labeled on every bar">
+              <g>
+                <line class="grid-line" x1="118" y1="6" x2="118" y2="196"/>
+                <line class="grid-line" x1="179.8" y1="6" x2="179.8" y2="196"/>
+                <line class="grid-line" x1="241.7" y1="6" x2="241.7" y2="196"/>
+                <text class="axis-label" x="118" y="207" text-anchor="middle">$0</text>
+                <text class="axis-label" x="179.8" y="207" text-anchor="middle">$30k</text>
+                <text class="axis-label" x="241.7" y="207" text-anchor="middle">$60k</text>
+              </g>
+              <g>
+                <text x="0" y="21" font-size="11" fill="var(--text-primary)">Marketing</text>
+                <rect x="118" y="10" width="60.0" height="14" rx="3" fill="var(--series-1)"><title>Marketing: $29.1k sanctioned spend</title></rect>
+                <rect x="178.0" y="10" width="46.4" height="14" rx="3" fill="var(--series-2)"><title>Marketing: $22.5k shadow (unsanctioned) spend, 43.7% of dept. spend</title></rect>
+                <line x1="204.6" y1="8" x2="204.6" y2="26" stroke="var(--critical)" stroke-width="1.5"><title>Marketing budget: $42.0k/mo — already exceeded MTD</title></line>
+                <text x="256" y="21" font-size="8" fill="var(--critical)">+$9.6k over &middot; 44% shadow</text>
+              </g>
+              <g>
+                <text x="0" y="53" font-size="11" fill="var(--text-primary)">Customer Success</text>
+                <rect x="118" y="42" width="25.4" height="14" rx="3" fill="var(--series-1)"><title>Customer Success: $12.3k sanctioned spend</title></rect>
+                <rect x="143.4" y="42" width="12.6" height="14" rx="3" fill="var(--series-2)"><title>Customer Success: $6.1k shadow (unsanctioned) spend, 33.3% of dept. spend</title></rect>
+                <line x1="177.8" y1="40" x2="177.8" y2="58" stroke="var(--text-primary)" stroke-width="1.5"><title>Customer Success budget: $29.0k/mo</title></line>
+                <text x="256" y="53" font-size="8" fill="var(--text-secondary)">$10.6k remaining &middot; 33% shadow</text>
+              </g>
+              <g>
+                <text x="0" y="85" font-size="11" fill="var(--text-primary)">Sales</text>
+                <rect x="118" y="74" width="41.2" height="14" rx="3" fill="var(--series-1)"><title>Sales: $20.0k sanctioned spend</title></rect>
+                <rect x="159.2" y="74" width="12.0" height="14" rx="3" fill="var(--series-2)"><title>Sales: $5.8k shadow (unsanctioned) spend, 22.5% of dept. spend</title></rect>
+                <line x1="200.5" y1="72" x2="200.5" y2="90" stroke="var(--text-primary)" stroke-width="1.5"><title>Sales budget: $40.0k/mo</title></line>
+                <text x="256" y="85" font-size="8" fill="var(--text-secondary)">$14.2k remaining &middot; 23% shadow</text>
+              </g>
+              <g>
+                <text x="0" y="117" font-size="11" fill="var(--text-primary)">Engineering</text>
+                <rect x="118" y="106" width="64.3" height="14" rx="3" fill="var(--series-1)"><title>Engineering: $31.2k sanctioned spend</title></rect>
+                <rect x="182.3" y="106" width="4.1" height="14" rx="3" fill="var(--series-2)"><title>Engineering: $2.0k shadow (unsanctioned) spend, 6.0% of dept. spend</title></rect>
+                <line x1="229.3" y1="104" x2="229.3" y2="122" stroke="var(--text-primary)" stroke-width="1.5"><title>Engineering budget: $54.0k/mo</title></line>
+                <text x="256" y="117" font-size="8" fill="var(--text-secondary)">$20.8k remaining &middot; 6% shadow</text>
+              </g>
+              <g>
+                <text x="0" y="149" font-size="11" fill="var(--text-primary)">Product &amp; Design</text>
+                <rect x="118" y="138" width="29.5" height="14" rx="3" fill="var(--series-1)"><title>Product &amp; Design: $14.3k sanctioned spend</title></rect>
+                <rect x="147.5" y="138" width="0.8" height="14" rx="3" fill="var(--series-2)"><title>Product &amp; Design: $0.4k shadow (unsanctioned) spend, 2.5% of dept. spend</title></rect>
+                <line x1="165.4" y1="136" x2="165.4" y2="154" stroke="var(--text-primary)" stroke-width="1.5"><title>Product &amp; Design budget: $23.0k/mo</title></line>
+                <text x="256" y="149" font-size="8" fill="var(--text-secondary)">$8.3k remaining &middot; 3% shadow</text>
+              </g>
+              <g>
+                <text x="0" y="181" font-size="11" fill="var(--text-primary)">IT / Ops</text>
+                <rect x="118" y="170" width="83.5" height="14" rx="3" fill="var(--series-1)"><title>IT / Ops: $40.5k sanctioned spend, $0 shadow</title></rect>
+                <line x1="245.8" y1="168" x2="245.8" y2="186" stroke="var(--text-primary)" stroke-width="1.5"><title>IT / Ops budget: $62.0k/mo</title></line>
+                <text x="256" y="181" font-size="8" fill="var(--text-secondary)">$21.5k remaining &middot; 0% shadow</text>
+              </g>
+            </svg>
+            <div class="legend">
+              <span><i style="background:var(--series-1);"></i>Sanctioned spend</span>
+              <span><i style="background:var(--series-2);"></i>Shadow spend</span>
+              <span><i style="background:var(--text-primary); width:2px; height:11px; border-radius:0;"></i>Budget (tick turns red if exceeded)</span>
+            </div>
+            <div class="chart-scope-note">Shows all departments so you can compare where attention is needed.</div>
+            <details class="chart-data">
+              <summary>View data</summary>
+              <table class="chart-data-table">
+                <tr><th>Department</th><th>Budget</th><th>MTD spend</th><th>Shadow $</th><th>Shadow %</th></tr>
+                <tr><td>Marketing</td><td>$42.0k</td><td>$51.6k</td><td>$22.5k</td><td>43.7%</td></tr>
+                <tr><td>Customer Success</td><td>$29.0k</td><td>$18.4k</td><td>$6.1k</td><td>33.3%</td></tr>
+                <tr><td>Sales</td><td>$40.0k</td><td>$25.8k</td><td>$5.8k</td><td>22.5%</td></tr>
+                <tr><td>Engineering</td><td>$54.0k</td><td>$33.2k</td><td>$2.0k</td><td>6.0%</td></tr>
+                <tr><td>Product &amp; Design</td><td>$23.0k</td><td>$14.7k</td><td>$0.4k</td><td>2.5%</td></tr>
+                <tr><td>IT / Ops</td><td>$62.0k</td><td>$40.5k</td><td>$0</td><td>0%</td></tr>
+              </table>
+            </details>
+          </div>
+
+          </div>
+        </div>
+
+        <!-- table -->
+        <div class="attn-head" style="border-radius:10px 10px 0 0;">
+          <span class="attn-title">Tool-level detail</span>
+          <span class="attn-count" id="toolCount"></span>
+        </div>
+        <div class="table-wrap" id="tableWrap" style="border-top:none; border-radius:0 0 10px 10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Tool</th><th>Status</th><th>Governance</th><th>Active users (30d)</th><th>Seat utilization</th><th>Usage trend · WoW</th><th>MTD spend / limit</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="toolsTbody"><!-- rendered by JS --></tbody>
+          </table>
+        </div>
+        <p class="table-caption">Shows the highest-signal tools. Click a row to see what a full drill-down would additionally surface.</p>
+
+      </div>
+    </div>
+    <p class="caption">Fig. 1 — AI Governance home screen. Fidelity is intentionally rough (no icon set, no brand type); every number and threshold is real and internally consistent across the KPI strip, table, and three charts. Date-range filters, the department dropdown, and row/item expand are fully functional — try them. Each row or Needs Attention item expands to one line describing what a full drill-down would show, rather than a built-out panel — kept intentionally light for this exercise.</p>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section id="part-2">
+    <div class="section-head"><span class="section-tag">Part 2</span><h2>API &amp; data source plan</h2></div>
+    <p>No single system tells the truth about AI usage — expense data misses free-tier shadow tools, and SSO misses anything signed up for outside it. The plan below triangulates four data types and reconciles them into one record per tool.</p>
+
+    <div class="approach">
+      <div class="eyebrow">How I got to this list</div>
+      <p style="margin:0 0 8px;">This list exists because of the <b>decision</b> in the Framing section above, not the other way around — the persona and their monthly budget call came first; the data sources are just what's needed to answer it.</p>
+      <div class="dfv-row">
+        <div class="dfv"><div class="term">Desirability</div><div class="desc">Do IT/Finance actually want this view? — validated by every competitor leading with the same discovery + spend pattern.</div></div>
+        <div class="dfv"><div class="term">Viability</div><div class="desc">Is triangulating four systems worth the build cost vs. the spend it prevents? — yes, given CloudEagle's own "10–30% savings" positioning.</div></div>
+        <div class="dfv active"><div class="term">Feasibility</div><div class="desc">Can we actually get this data, and how fresh? — this is what the four groups below answer.</div></div>
+      </div>
+      <ul>
+        <li><b>Sequencing (v1 → v2):</b> ship groups C (vendor usage APIs) and A's SSO logs first — official integrations, fastest to stand up, and cover the two numbers the persona needs most (spend, sanctioned users). CASB/EDR in group A and the corporate-card feed in group B follow in v2 — they need security/finance team sign-off and infra work, not just an API key.</li>
+        <li><b>Freshness is a choice, not a default:</b> vendor usage APIs (group C) are polled every 15–60 min because the budget-owner decision is time-sensitive — catching an overage this week beats catching it next month. HRIS (group D) only needs a nightly poll — department assignments don't change hour to hour, so paying for faster sync there buys nothing.</li>
+        <li><b>Privacy flag:</b> CASB/browser-level data (group A) and card-level transaction data (group B) are sensitive by nature — before wiring either in, this would go through a security/legal review, not just an engineering estimate. That review matters more here than at most companies, since handling this exact kind of data responsibly <i>is</i> CloudEagle's product.</li>
+      </ul>
+    </div>
+
+    <div class="api-group">
+      <h3>A. Identity &amp; access — who's using what</h3>
+      <p class="group-why">This group answers "is a human actually using this tool, and did we provision it." SSO alone under-counts — it only sees what was set up through it — so it's paired with network-level signals that catch tools employees found on their own.</p>
+      <div style="overflow-x:auto;">
+      <table class="api-table">
+        <tr><th>Source</th><th>Examples &amp; endpoint</th><th>Auth</th><th>Mechanism</th><th>Fields pulled → becomes on screen</th></tr>
+        <tr><td class="src">SSO / IdP logs</td><td>Okta System Log API; Google Workspace Admin SDK Reports API (OAuth Token activity report tracks grants/revokes to 3rd-party apps); Azure AD/Entra sign-in &amp; audit logs</td><td>OAuth2, admin/read-only scope</td><td class="mech">Poll every 15 min</td><td><ul class="field-map">
+          <li><code>actor.id</code> × <code>target.displayName</code><span class="arrow">→</span>distinct users per app = <b>"812 / 900"</b> on the ChatGPT Enterprise row</li>
+          <li>a <code>target.displayName</code> match exists at all<span class="arrow">→</span><b>"Within budget/Approaching/Over threshold"</b> pill instead of "Unsanctioned"</li>
+          <li>count of distinct <code>target.displayName</code> values<span class="arrow">→</span>the <b>"33"</b> in "33 sanctioned · 9 shadow"</li>
+          <li><code>client.loginMethod</code> (sso vs. federated vs. none)<span class="arrow">→</span>the <b>"SSO enforced"</b> / <b>"Personal account"</b> badge in the row drill-down panel</li>
+        </ul></td></tr>
+        <tr><td class="src">CASB / SASE proxy</td><td>Netskope, Zscaler traffic-export APIs</td><td>API key</td><td class="mech">Poll hourly export</td><td><ul class="field-map">
+          <li><code>app_name</code> (matched to a GenAI app catalog) × <code>user</code><span class="arrow">→</span><b>"22 users detected"</b> on the Jasper AI row</li>
+          <li><code>app_name</code> seen here with <i>no</i> match in the SSO data above<span class="arrow">→</span>the <b>"Shadow"</b> governance pill, and the <b>"9"</b> shadow tools in the KPI</li>
+          <li><code>auth_type</code> (personal email, OAuth-to-Google, none detected)<span class="arrow">→</span>the login-method line in the drill-down panel for unsanctioned tools</li>
+        </ul></td></tr>
+        <tr><td class="src">EDR telemetry (optional)</td><td>CrowdStrike Falcon API</td><td>OAuth2</td><td class="mech">Poll hourly</td><td><ul class="field-map">
+          <li><code>ProcessName</code>, <code>UserName</code><span class="arrow">→</span>double-checks the CASB row above; doesn't produce its own number on screen</li>
+        </ul></td></tr>
+      </table>
+      </div>
+      <div class="read-more">Read more: <a href="https://developer.okta.com/docs/reference/core-okta-api/" target="_blank" rel="noopener">Okta Core API reference</a> · <a href="https://developers.google.com/workspace/admin/reports" target="_blank" rel="noopener">Google Workspace Admin SDK Reports API</a></div>
+    </div>
+
+    <div class="api-group">
+      <h3>B. Financial — what it's costing</h3>
+      <p class="group-why">This group answers "what did we actually pay, and what did we agree to pay." Card/expense data catches spend that never goes through procurement (the classic shadow-tool giveaway: a $20/mo charge with no PO behind it); the contract system is the source of truth for the budget number itself.</p>
+      <div style="overflow-x:auto;">
+      <table class="api-table">
+        <tr><th>Source</th><th>Examples &amp; endpoint</th><th>Auth</th><th>Mechanism</th><th>Fields pulled → becomes on screen</th></tr>
+        <tr><td class="src">Corporate card / expense</td><td>Ramp API, Brex API, Airbase API — transaction feed</td><td>OAuth2</td><td class="mech">Webhook on new transaction + nightly reconciliation poll</td><td><ul class="field-map">
+          <li><code>merchant.name</code>, <code>merchant.category_code</code>, <code>amount</code><span class="arrow">→</span>summed by merchant this month = <b>"$1,860 (card spend)"</b> on the Jasper AI row</li>
+        </ul></td></tr>
+        <tr><td class="src">ERP / AP</td><td>NetSuite SuiteTalk (REST/SOAP), QuickBooks Online API</td><td>API key / OAuth2</td><td class="mech">Poll nightly</td><td><ul class="field-map">
+          <li><code>vendor</code>, <code>line_item.amount</code>, <code>period</code><span class="arrow">→</span>summed per tool = <b>"$42,300"</b> MTD spend on ChatGPT Enterprise; summed org-wide = the <b>"$184.2k"</b> KPI figure</li>
+        </ul></td></tr>
+        <tr><td class="src">Procurement &amp; contracts</td><td>Ironclad API, DocuSign API</td><td>OAuth2</td><td class="mech">Event-driven, fires on contract signature</td><td><ul class="field-map">
+          <li><code>contract.vendor_name</code>, <code>contract.monthly_cap</code><span class="arrow">→</span><b>"$45,000"</b> Monthly limit on the ChatGPT Enterprise row</li>
+          <li>summed across all active contracts<span class="arrow">→</span>the <b>"$210k"</b> budget figure in the KPI tile; the same contract caps allocated per <code>worker.department</code><span class="arrow">→</span>the per-department budget tick in each Chart 3 bar (e.g. Marketing's $42.0k/mo)</li>
+          <li><code>approval.approver</code>, <code>approval.date</code><span class="arrow">→</span>the approval-record line in the row drill-down panel</li>
+        </ul></td></tr>
+      </table>
+      </div>
+      <div class="read-more">Read more: <a href="https://docs.ramp.com/" target="_blank" rel="noopener">Ramp API docs</a> · <a href="https://developer.ironclad.com/" target="_blank" rel="noopener">Ironclad developer docs</a></div>
+    </div>
+
+    <div class="api-group">
+      <h3>C. Vendor usage — the "limit" side</h3>
+      <p class="group-why">This is the highest-signal, lowest-latency group — it comes straight from the AI vendor and reflects consumption <i>before</i> it turns into an invoice line. It's also the group a technical background helps most with, since each vendor's admin API has its own shape.</p>
+      <div style="overflow-x:auto;">
+      <table class="api-table">
+        <tr><th>Source</th><th>Examples &amp; endpoint</th><th>Auth</th><th>Mechanism</th><th>Fields pulled → becomes on screen</th></tr>
+        <tr><td class="src">Direct vendor admin/usage APIs</td><td><b>OpenAI:</b> Admin API, <code>GET /v1/organization/usage/{completions,...}</code> + enterprise workspace member list (org-level, Admin API key). <b>Anthropic:</b> Usage &amp; Cost Admin API, token consumption by workspace/key/model in 1-min/hour/day buckets (needs an <code>sk-ant-admin...</code> key). <b>Google Vertex AI:</b> Cloud Billing + Vertex usage export. <b>Microsoft 365 Copilot:</b> Graph API usage reports. <b>GitHub Copilot:</b> Copilot usage API (seat activity by org).</td><td>OAuth2 / Admin API key</td><td class="mech">Poll every 15–60 min</td><td><ul class="field-map">
+          <li>OpenAI: <code>user.email</code>, <code>user.last_active_at</code><span class="arrow">→</span>count active in 30d = the <b>"812"</b> in "812/900"; 812÷900 = the <b>"90%"</b> seat utilization bar</li>
+          <li>Anthropic: <code>workspace_id</code>, <code>input_tokens</code>/<code>output_tokens</code>, <code>cost_usd</code><span class="arrow">→</span>summed cost = <b>"$9,800"</b> on the Claude Team row; broken out per model = the cost-breakdown bars in that row's drill-down panel</li>
+          <li>GitHub Copilot: <code>seat.assignee</code>, <code>seat.last_activity_at</code><span class="arrow">→</span><b>"210 / 220"</b> and the <b>"95%"</b> utilization bar</li>
+          <li>all four vendors' active-user counts, summed<span class="arrow">→</span>the <b>"1,240"</b> in "1,240 / 2,100 staff" KPI, and each month's point on Chart 2's sanctioned line; re-summed over 7d/90d windows<span class="arrow">→</span>the KPI and table figures shown when the date-range filter changes</li>
+        </ul></td></tr>
+      </table>
+      </div>
+      <div class="read-more">Read more: <a href="https://developers.openai.com/api/reference/administration/overview" target="_blank" rel="noopener">OpenAI Admin API overview</a> · <a href="https://platform.claude.com/docs/en/manage-claude/usage-cost-api" target="_blank" rel="noopener">Anthropic Usage &amp; Cost Admin API</a></div>
+    </div>
+
+    <div class="api-group">
+      <h3>D. Org context — attributing correctly</h3>
+      <p class="group-why">Every number above is meaningless for a "by department" rollup (like Chart 3 and the department filter) until it's tied to a person's actual team — that mapping only lives in the HRIS.</p>
+      <div style="overflow-x:auto;">
+      <table class="api-table">
+        <tr><th>Source</th><th>Examples &amp; endpoint</th><th>Auth</th><th>Mechanism</th><th>Fields pulled → becomes on screen</th></tr>
+        <tr><td class="src">HRIS</td><td>Workday HCM API, BambooHR API</td><td>OAuth2</td><td class="mech">Poll nightly</td><td><ul class="field-map">
+          <li><code>worker.department</code>, <code>worker.manager</code><span class="arrow">→</span>the <b>"Product &amp; Design · owner: R. Iyer"</b> subtext under the Claude Team row, and the value each row is matched against when the department dropdown filters the table</li>
+          <li>every tool's spend, grouped by <code>worker.department</code><span class="arrow">→</span>the six department spend bars in Chart 3 (e.g. Marketing's MTD spend, split sanctioned/shadow)</li>
+        </ul></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="recon"><b>Reconciliation rule:</b> a tool is <b>sanctioned</b> if it appears in the procurement/contract system (group B) or was provisioned through admin-owned SSO (group A). Anything with active usage from the CASB or a vendor usage API (groups A/C) but <i>no</i> such match is flagged <b>shadow</b> — this single rule is what powers the "Unsanctioned" label and Chart 3, and it's why the plan needs all four groups rather than any one of them alone.</div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section id="part-3">
+    <div class="section-head"><span class="section-tag">Part 3</span><h2>Why these three charts</h2></div>
+    <div class="rationale-grid">
+      <div class="rationale">
+        <div><div class="num">01</div><div class="name">AI spend vs. approved limit, org-wide</div><div class="job"><i>How is AI spend tracking against the limit?</i></div></div>
+        <div class="why">Shows total AI spend, its month-over-month trajectory, and the approved limit in one view. The projection makes a potential overage visible before month-end, rather than after the budget has already been exceeded.</div>
+      </div>
+      <div class="rationale">
+        <div><div class="num">02</div><div class="name">AI adoption: sanctioned vs. shadow</div><div class="job"><i>Is AI adoption becoming more or less controlled?</i></div></div>
+        <div class="why">Spend alone cannot show whether shadow AI is a temporary issue or a growing governance problem. Tracking sanctioned and shadow adoption over time reveals the direction of that problem. Here, shadow adoption is growing 3.3× faster than sanctioned adoption, making the trend more important than a point-in-time count.</div>
+      </div>
+      <div class="rationale">
+        <div><div class="num">03</div><div class="name">AI spend vs. budget, sanctioned vs. shadow, by department</div><div class="job"><i>Where is shadow AI creating the biggest governance gap?</i></div></div>
+        <div class="why">The org-wide view shows that there is a risk; this view shows where it is concentrated. Separating sanctioned and shadow spend by department, while comparing total spend with each department's budget, helps IT Ops identify which teams have the largest ungoverned spend and whether it is within or beyond budget.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- per-tool identity, financial reference points ----------
+  var TOOLS = [
+    { key:"chatgpt", name:"ChatGPT Enterprise", ownerLine:"IT / Ops · owner: IT", dept:"IT / Ops",
+      limit:45000, limitText:"$45,000", userCap:900, prevWeekSpend:14200,
+      mtd:{spend:42300,spendText:"$42,300",users:812,usersText:"812 / 900"},
+      last7:{spend:16400,spendText:"$16,400",users:705,usersText:"705 / 900"},
+      last90:{spend:121000,spendText:"$121,000",users:870,usersText:"870 / 900"} },
+    { key:"claude", name:"Anthropic Claude Team", ownerLine:"Product &amp; Design · owner: R. Iyer", dept:"Product &amp; Design",
+      limit:12000, limitText:"$12,000", userCap:120, prevWeekSpend:3300,
+      mtd:{spend:9800,spendText:"$9,800",users:96,usersText:"96 / 120"},
+      last7:{spend:3900,spendText:"$3,900",users:78,usersText:"78 / 120"},
+      last90:{spend:27500,spendText:"$27,500",users:112,usersText:"112 / 120"} },
+    { key:"copilot", name:"GitHub Copilot", ownerLine:"Engineering · owner: D. Fernandes", dept:"Engineering",
+      limit:8000, limitText:"$8,000", userCap:220, prevWeekSpend:2450,
+      mtd:{spend:6300,spendText:"$6,300",users:210,usersText:"210 / 220"},
+      last7:{spend:2500,spendText:"$2,500",users:205,usersText:"205 / 220"},
+      last90:{spend:18200,spendText:"$18,200",users:218,usersText:"218 / 220"} },
+    { key:"midjourney", name:"Midjourney", ownerLine:"Marketing · owner: S. Kapoor", dept:"Marketing",
+      limit:2500, limitText:"$2,500", userCap:20, prevWeekSpend:780,
+      mtd:{spend:2650,spendText:"$2,650",users:18,usersText:"18 / 20"},
+      last7:{spend:950,spendText:"$950",users:17,usersText:"17 / 20"},
+      last90:{spend:6900,spendText:"$6,900",users:19,usersText:"19 / 20"} },
+    { key:"perplexity", name:"Perplexity Enterprise", ownerLine:"Sales · owner: A. Costa", dept:"Sales",
+      limit:6000, limitText:"$6,000", userCap:150, prevWeekSpend:1300,
+      mtd:{spend:3100,spendText:"$3,100",users:64,usersText:"64 / 150"},
+      last7:{spend:1150,spendText:"$1,150",users:48,usersText:"48 / 150"},
+      last90:{spend:8600,spendText:"$8,600",users:95,usersText:"95 / 150"} },
+    { key:"jasper", name:"Jasper AI", ownerLine:"Marketing · no registered owner", dept:"Marketing",
+      limit:null, limitText:"No limit set", userCap:null, cardSpend:true, prevWeekSpend:410,
+      mtd:{spend:1860,spendText:"$1,860",users:null,usersText:"22 users detected"},
+      last7:{spend:640,spendText:"$640",users:null,usersText:"14 users detected"},
+      last90:{spend:5200,spendText:"$5,200",users:null,usersText:"31 users detected"} },
+    { key:"otter", name:"Otter.ai", ownerLine:"Customer Success · no registered owner", dept:"Customer Success",
+      limit:null, limitText:"No limit set", userCap:null, freeTier:true, prevWeekUsers:15,
+      mtd:{spend:0,spendText:"$0",users:null,usersText:"35 users detected"},
+      last7:{spend:0,spendText:"$0",users:null,usersText:"22 users detected"},
+      last90:{spend:0,spendText:"$0",users:null,usersText:"48 users detected"} }
+  ];
+
+  // week-over-week velocity: spend-based for tools with real spend data, user-count-based
+  // for free-tier tools (like Otter) where spend is always $0 and detected-user count is the only signal
+  function velocityFor(tool){
+    if(tool.prevWeekSpend){
+      var cur = tool.last7.spend, prev = tool.prevWeekSpend;
+      var pct = Math.round(((cur - prev) / prev) * 100);
+      return { pct:pct, dir: pct > 2 ? "up" : pct < -2 ? "down" : "flat", metric:"spend",
+        curText: tool.last7.spendText, prevText: "$" + prev.toLocaleString() };
+    }
+    if(tool.prevWeekUsers){
+      var curU = parseInt((tool.last7.usersText || "").match(/\d+/)[0], 10);
+      var pctU = Math.round(((curU - tool.prevWeekUsers) / tool.prevWeekUsers) * 100);
+      return { pct:pctU, dir: pctU > 2 ? "up" : pctU < -2 ? "down" : "flat", metric:"users",
+        curText: curU + " users", prevText: tool.prevWeekUsers + " users" };
+    }
+    return null;
+  }
+
+  // status is ALWAYS computed from current MTD standing, regardless of selected range (see range-note)
+  function statusFor(tool){
+    if(tool.limit === null) return {cls:"neutral", text:"No limit set", pctText:"—"};
+    var pct = Math.round((tool.mtd.spend / tool.limit) * 100);
+    var pctText = pct + "%";
+    if(pct >= 100) return {cls:"critical", text:"Over limit", pctText:pctText, pct:pct};
+    if(pct >= 70) return {cls:"warning", text:"Approaching limit", pctText:pctText, pct:pct};
+    return {cls:"good", text:"Within budget", pctText:pctText, pct:pct};
+  }
+  // Governance is a separate axis from Status: a tool can be over its spend limit AND
+  // properly governed (or under budget and still ungoverned) — Midjourney is the concrete
+  // case of the former, so this can't just be folded into statusFor()'s threshold logic.
+  // Sanctioned/shadow here follows DETAILS[key].flag (real SSO/IT-approval status), not just
+  // "does a contract exist" — matches how CloudEagle itself defines shadow AI: a tool can have
+  // a budget line and still be shadow if it was never actually governed.
+  function governanceFor(tool){
+    var d = DETAILS[tool.key];
+    return (d && d.flag) ? {cls:"shadow", text:"Shadow"} : {cls:"sanctioned", text:"Sanctioned"};
+  }
+  function utilFor(tool){
+    if(tool.userCap === null) return null;
+    var u = tool.mtd.users, pct = Math.round((u/tool.userCap)*100);
+    var color = pct>=90 ? "var(--good)" : pct>=70 ? "var(--warning)" : "var(--muted)";
+    // seat utilization uses the same good/warn banding the original static screen used (healthy = high, not a risk signal)
+    return {pct:pct, color: (tool.key==="chatgpt"||tool.key==="midjourney") ? "var(--critical)" : color};
+  }
+  // one specific next action per tool, or none if it's already within budget and approved.
+  // Priority: no contract/limit on file > no approval record on file > over the spend threshold.
+  function actionFor(tool, detail, status){
+    if(tool.limit === null) return "Bring under contract";
+    if(detail && detail.flag) return "Request IT approval";
+    if(status.cls === "critical") return "Flag for budget review";
+    return null;
+  }
+
+  // ---------- Chart 1 data: org-wide monthly spend vs. approved limit ----------
+  // Single source of truth for the chart's line/points AND its per-month drill-down drawer,
+  // so the two can never disagree (same pattern as statusFor/buildAttentionItems above).
+  var MONTHLY_SPEND = [
+    { key:"mar", label:"Mar", value:138000, actual:true },
+    { key:"apr", label:"Apr", value:149000, actual:true },
+    { key:"may", label:"May", value:161000, actual:true },
+    { key:"jun", label:"Jun", value:176000, actual:true },
+    { key:"jul", label:"Jul", value:196000, actual:true },
+    { key:"aug", label:"Aug", value:224800, actual:false }
+  ];
+  var SPEND_LIMIT = 210000;
+  var SPEND_CHART = { xLeft:50, xRight:430, yTop:185 };
+
+  // Illustrative top-down department split, applied to each month's known total rather than
+  // hand-typed per month — does not attempt to reconcile bottom-up with the 7-tool table,
+  // which only shows the highest-signal tools of the 42 discovered, not the full portfolio.
+  // Fixed order so color always follows the department, never its rank for a given month.
+  var DEPT_SHARE = [
+    ["Marketing", 0.28, "var(--dept-1)"], ["IT / Ops", 0.22, "var(--dept-2)"],
+    ["Engineering", 0.18, "var(--dept-3)"], ["Sales", 0.14, "var(--dept-4)"],
+    ["Customer Success", 0.10, "var(--dept-5)"], ["Product & Design", 0.08, "var(--dept-6)"]
+  ];
+
+  // Per-department AI budget allocation. Grounded in web research rather than an
+  // arbitrary split: coding tools account for ~55% of departmental application-layer
+  // AI spend industry-wide, so Engineering gets the largest allocation; content
+  // creation (71%) and customer interaction (54%) are the top two GenAI use cases,
+  // supporting real allocations for Marketing and Customer Success too. Marketing's
+  // limit is set below its actual spend share on purpose — it's already the flagged
+  // problem department everywhere else in this dashboard (Chart 3, Needs Attention),
+  // and its own department view should show that, not hide it.
+  //
+  // D-32 (Option B): the first pass here left 5 of 6 departments at-or-over their
+  // limit in Aug, which diluted Marketing's specific flagged status into what looked
+  // like an org-wide problem. Rebalanced so only Marketing clearly reads as over —
+  // every other department keeps ~20-25% headroom against its actual Aug run-rate,
+  // consistent with "management by exception" rather than flagging everything at once.
+  var DEPT_LIMIT = {
+    "Engineering": 54000, "IT / Ops": 62000, "Marketing": 42000,
+    "Sales": 40000, "Customer Success": 29000, "Product & Design": 23000
+  };
+
+  // bar geometry: 6 bars across the plot width, capped at the ≤24px mark spec
+  // (the earlier version used 80px — too thick — this applies the spec correctly)
+  var BAR_W = 22, BAR_STEP = (SPEND_CHART.xRight - SPEND_CHART.xLeft) / MONTHLY_SPEND.length;
+  function spendBarLeft(i){ return SPEND_CHART.xLeft + i * BAR_STEP; }
+  function spendBarCenter(i){ return spendBarLeft(i) + BAR_W / 2; }
+  function spendY(v, yMax){ return SPEND_CHART.yTop - (v / yMax) * (SPEND_CHART.yTop - 10); }
+  function fmtK(v){ return "$" + (v/1000).toFixed(1).replace(/\.0$/,"") + "k"; }
+  // round up to the nearest 10k, with headroom, so bars/limit never sit flush against
+  // the top of the chart — recomputed per view so a small department's scale doesn't
+  // borrow the org total's ~240k axis and render tiny
+  function niceCeil(v){ return Math.ceil(v / 10000) * 10000; }
+  function spendYMax(series, limit){
+    var peak = Math.max.apply(null, series.map(function(m){ return m.value; }).concat([limit]));
+    return Math.max(niceCeil(peak * 1.15), 30000);
+  }
+
+  function deptBreakdownFor(month){
+    return DEPT_SHARE.map(function(d){ return [d[0], Math.round(month.value * d[1]), d[2]]; });
+  }
+
+  // the series currently on screen: org total by default, or one department's monthly
+  // spend when selected — same six months either way, just a different value per month
+  function currentSeries(){
+    if(!state.selectedDept) return MONTHLY_SPEND.map(function(m){ return {key:m.key, label:m.label, actual:m.actual, value:m.value}; });
+    return MONTHLY_SPEND.map(function(m){
+      var d = deptBreakdownFor(m).filter(function(x){ return x[0] === state.selectedDept; })[0];
+      return { key:m.key, label:m.label, actual:m.actual, value:d[1] };
+    });
+  }
+  function currentLimit(){ return state.selectedDept ? DEPT_LIMIT[state.selectedDept] : SPEND_LIMIT; }
+  function currentColor(){
+    if(!state.selectedDept) return "var(--series-1)";
+    return DEPT_SHARE.filter(function(d){ return d[0] === state.selectedDept; })[0][2];
+  }
+
+  function renderSpendChart(){
+    var yBase = SPEND_CHART.yTop;
+    var series = currentSeries();
+    var limit = currentLimit();
+    var color = currentColor();
+    var yMax = spendYMax(series, limit);
+    var bars = series.map(function(m,i){
+      var top = spendY(m.value, yMax);
+      return { left:spendBarLeft(i), center:spendBarCenter(i), top:top, h:Math.max(yBase-top,0), m:m, i:i };
+    });
+
+    // y-axis gridlines + $ labels, scaled to this view's own yMax — 4 evenly-spaced
+    // steps, same look as the old static axis but never stale for the current series
+    var axisHtml = "";
+    for(var s=1; s<=4; s++){
+      var v = (yMax/4)*s;
+      var y = spendY(v, yMax);
+      axisHtml += '<line class="grid-line" x1="' + SPEND_CHART.xLeft + '" y1="' + y + '" x2="' + SPEND_CHART.xRight + '" y2="' + y + '"/>';
+      axisHtml += '<text class="axis-label" x="' + (SPEND_CHART.xLeft-5) + '" y="' + (y+3.5) + '" text-anchor="end">' + fmtK(v) + '</text>';
+    }
+    el("spendYAxis").innerHTML = axisHtml;
+
+    // approved-limit reference line — moves to the selected department's own limit,
+    // or back to the org-wide $210k when "Total" is selected. Label is anchored above
+    // the tallest bar (not just the limit line's own height) so it never collides with
+    // a bar that already exceeds the limit in an earlier month — common now that
+    // per-department limits are much smaller than the old fixed $210k org line.
+    var limitY = spendY(limit, yMax);
+    var tallestBarTop = Math.min.apply(null, bars.map(function(b){ return b.top; }));
+    var limitLabelY = Math.max(12, Math.min(limitY, tallestBarTop) - 6);
+    // department name dropped from this label — the scope note under the title now
+    // owns that ("Marketing · $42k/month approved"), so the in-chart label only needs
+    // to answer "what's the $ value" for someone scanning the bars, not "whose limit"
+    var limitLabel = "Approved limit · " + fmtK(limit) + "/month";
+    el("spendLimitLine").innerHTML =
+      '<line x1="' + SPEND_CHART.xLeft + '" y1="' + limitY + '" x2="' + SPEND_CHART.xRight + '" y2="' + limitY + '" stroke="var(--text-primary)" stroke-width="1.5" stroke-dasharray="3,3"/>' +
+      '<text x="' + (SPEND_CHART.xLeft+3) + '" y="' + limitLabelY + '" font-size="8.5" font-weight="700" fill="var(--text-primary)">' + limitLabel + '</text>';
+
+    el("spendPoints").innerHTML = bars.map(function(b){
+      var isProjected = !b.m.actual;
+      var barRect = isProjected
+        ? '<rect x="' + b.left + '" y="' + b.top + '" width="' + BAR_W + '" height="' + b.h + '" rx="3" fill="' + color + '" fill-opacity="0.45" stroke="' + color + '" stroke-width="1.3" stroke-dasharray="3,2.5"/>'
+        : '<rect x="' + b.left + '" y="' + b.top + '" width="' + BAR_W + '" height="' + b.h + '" rx="3" fill="' + color + '"/>';
+      var titleText = b.m.label + (isProjected ? ", projected: " : ": ") + fmtK(b.m.value);
+      return '<g>' + barRect + '<title>' + titleText + '</title></g>';
+    }).join("");
+
+    var last = bars[bars.length-1];
+    var pctOfLimit = Math.round((last.m.value/limit)*100);
+    var pctColor = pctOfLimit >= 100 ? "var(--critical)" : pctOfLimit >= 90 ? "var(--warning)" : "var(--good)";
+    el("spendAnnotation").innerHTML =
+      '<text x="' + (last.left+BAR_W) + '" y="10" font-size="10" font-weight="700" fill="' + pctColor + '" text-anchor="end">' + fmtK(last.m.value) + ' proj.</text>' +
+      '<text x="' + (last.left+BAR_W) + '" y="21" font-size="9" fill="' + pctColor + '" text-anchor="end">' + pctOfLimit + '% of limit</text>';
+
+    el("spendMonthLabels").innerHTML = bars.map(function(b){
+      var isLast = b.i === bars.length - 1;
+      return isLast
+        ? '<text x="' + b.center + '" y="198" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--critical)">' + b.m.label + '*</text>'
+        : '<text class="axis-label" x="' + b.center + '" y="198" text-anchor="middle">' + b.m.label + '</text>';
+    }).join("");
+
+    // scope readout under the title — "All departments · $210k/month approved" or
+    // "Marketing · $42k/month approved" — states what the chart is currently scoped
+    // to so switching departments never leaves the $ limit's change unexplained
+    var scopeName = state.selectedDept ? state.selectedDept : "All departments";
+    el("spendScopeNote").textContent = scopeName + " · " + fmtK(limit) + "/month approved";
+  }
+
+  function renderDeptList(){
+    // ranked by this month's (Aug) contribution, largest first, so "who contributes
+    // most" is answered by the list itself — no click required. "Total" is the
+    // aggregate, not a department, so it's pinned above the ranking, not sorted into it.
+    var lastMonth = MONTHLY_SPEND[MONTHLY_SPEND.length-1];
+    var ranked = deptBreakdownFor(lastMonth)
+      .slice()
+      .sort(function(a,b){ return b[1]-a[1]; })
+      .map(function(d){ return { key:d[0], label:d[0], color:d[2], amount:d[1] }; });
+
+    var totalItem = '<button type="button" class="dept-item' + (state.selectedDept===null?' active':'') + '" data-dept="" aria-pressed="' + (state.selectedDept===null) + '">' +
+      '<i style="background:var(--muted);"></i><span>Total</span>' +
+    '</button>';
+
+    // amounts only make sense as a "who contributes most to the Total" ranking —
+    // once a specific department is selected, its own number is already shown by
+    // the chart itself (the % of limit annotation), so showing every other
+    // department's unrelated figure here would just be out-of-context noise
+    var showAmounts = state.selectedDept === null;
+    var rankedHtml = ranked.map(function(it){
+      var active = state.selectedDept === it.key;
+      return '<button type="button" class="dept-item' + (active ? ' active' : '') + '" data-dept="' + it.key + '" aria-pressed="' + active + '">' +
+        '<i style="background:' + it.color + ';"></i><span>' + it.label + '</span>' + (showAmounts ? '<b class="dept-amt">' + fmtK(it.amount) + '</b>' : '') +
+      '</button>';
+    }).join("");
+
+    el("deptList").innerHTML = totalItem + '<div class="dept-list-sep"></div>' + rankedHtml;
+  }
+
+  function selectDept(key){
+    state.selectedDept = key ? ((state.selectedDept === key) ? null : key) : null;
+    renderSpendChart();
+    renderDeptList();
+    renderSpendCaption();
+  }
+
+  // scope (who/what limit) now lives in the title's scope note; the department-filter
+  // disambiguation now lives only in filter-scope-note and Part 3's "Deliberately not
+  // wired up" paragraph — this footnote no longer needs to repeat either, so it's
+  // pared down to just the one thing unique to it: the projection methodology
+  function renderSpendCaption(){
+    el("spendCaption").textContent = "August is projected from month-to-date spend, not a statistical forecast. * = projected.";
+  }
+
+  function renderSpendDataTable(){
+    el("spendDataBody").innerHTML = MONTHLY_SPEND.map(function(m){
+      var b = deptBreakdownFor(m);
+      var byName = {}; b.forEach(function(d){ byName[d[0]] = d[1]; });
+      return '<tr><td>' + m.label + (m.actual ? "" : " (proj.)") + '</td>' +
+        DEPT_SHARE.map(function(d){ return '<td>' + fmtK(byName[d[0]]) + '</td>'; }).join("") +
+        '<td>' + fmtK(m.value) + '</td></tr>';
+    }).join("");
+  }
+
+  // toggling a legend checkbox hides/shows that line — the identity-preserving,
+  // no-page-filter-needed interaction from the Pencil & Paper article
+  function renderChart2Visibility(){
+    var sanctionedLine = document.getElementById("chart2SanctionedLine");
+    var shadowLine = document.getElementById("chart2ShadowLine");
+    if(sanctionedLine) sanctionedLine.style.display = state.chart2Visible.sanctioned ? "" : "none";
+    if(shadowLine) shadowLine.style.display = state.chart2Visible.shadow ? "" : "none";
+    document.querySelectorAll('.legend-toggle').forEach(function(lbl){
+      var input = lbl.querySelector("input");
+      if(input) lbl.classList.toggle("off", !input.checked);
+    });
+  }
+
+  // ---------- drill-down detail data ----------
+  var DETAILS = {
+    chatgpt:{
+      login:"sso", loginText:"Okta SSO (enforced) — 100% of active users signed in via SSO",
+      approval:"Approved by IT — Nov 2, 2024. Renewed annually, next review Nov 2026.", flag:false,
+      breakdown:[["GPT-4o","$28.1k",66],["GPT-4o mini","$9.2k",22],["o1","$5.0k",12]],
+      note:"Largest single AI line item org-wide, and now approaching its monthly limit. Worth a usage-policy review before next renewal.", noteFlag:true
+    },
+    claude:{
+      login:"sso", loginText:"Okta SSO (enforced) — 100% of active users signed in via SSO",
+      approval:"Approved by IT — Jan 15, 2025, scoped to Product &amp; Design. Renews Jan 2026.", flag:false,
+      breakdown:[["Claude Sonnet","$7.4k",76],["Claude Opus","$2.4k",24]],
+      note:"82% of monthly limit with 12 days left — likely to cross the 90% threshold before month-end at current pace.", noteFlag:false
+    },
+    copilot:{
+      login:"sso", loginText:"Okta SSO (enforced) — 100% of active users signed in via SSO",
+      approval:"Approved by IT — Sep 1, 2024. Standard engineering tool, auto-renews.", flag:false,
+      breakdown:[["Copilot Chat","$3.9k",62],["Copilot Completions","$2.4k",38]],
+      note:"Seat utilization is healthy (95%) — the &quot;approaching limit&quot; flag here is a budget question, not an adoption one.", noteFlag:false
+    },
+    midjourney:{
+      login:"personal", loginText:"No SSO integration available — 18 users sign in with individual accounts (email / Discord)",
+      approval:"Approved by Marketing lead (S. Kapoor) via email, Jun 2025 — no formal IT sign-off on file.", flag:true,
+      breakdown:[["Standard plan","$2.7k",100]],
+      note:"Smallest dollar amount over its limit, but the weakest governance in the table: personal logins and no IT approval record.", noteFlag:true
+    },
+    perplexity:{
+      login:"sso", loginText:"Okta SSO (enforced) — 100% of active users signed in via SSO",
+      approval:"Approved by IT — Mar 2025, scoped to Sales.", flag:false,
+      breakdown:[["Pro search","$3.1k",100]],
+      note:"Well under budget (52%) and low seat utilization (43%) — a licensing right-size candidate, not a governance risk.", noteFlag:false
+    },
+    jasper:{
+      login:"personal", loginText:"No SSO — 22 users signed up individually with a work email; no admin console configured",
+      approval:"No approval record found. Detected via CASB traffic on Jul 28, 2026 — flagged for IT review, not yet actioned.", flag:true,
+      breakdown:null,
+      breakdownNote:"Spend visibility is limited to corporate-card transactions ($1,860); no vendor usage API access since it isn't centrally provisioned.",
+      note:"Recommend bringing this under a managed contract, or blocking it, before it accumulates more unmanaged spend in Marketing.", noteFlag:true
+    },
+    otter:{
+      login:"personal", loginText:"No SSO — 35 users signed in via personal Google accounts",
+      approval:"No approval record found. Detected via CASB traffic on Jun 14, 2026 — no action taken yet.", flag:true,
+      breakdown:null,
+      breakdownNote:"Zero measured spend (free tier) — this tool has no financial signal at all, only usage detected via CASB.",
+      note:"Zero spend, but 35 active users and no data-handling agreement in place — a compliance question, not a budget one.", noteFlag:true
+    }
+  };
+
+  var RANGE_LABELS = {
+    mtd:{spendLabel:"AI spend, MTD", usersLabel:"Active AI users"},
+    last7:{spendLabel:"AI spend, 7d", usersLabel:"Active AI users, 7d"},
+    last90:{spendLabel:"AI spend, 90d", usersLabel:"Active AI users, 90d"}
+  };
+
+  // toolsValue/toolsSub, overValue/overCritical/overWarning: kept per-range for structural
+  // parity even though Shadow AI and "Tools nearing / over limit" are both frozen (identical
+  // across all three tabs) — they're point-in-time governance signals, not windowed
+  // measurements, same reasoning as the table below. toolsValue.mtd is what the table's
+  // "of 42" count badge reads (also frozen — see toolCount in renderTable()).
+  var KPI = {
+    mtd:{ spendValue:"$184.2k", spendOf:"/ $210k budget", spendDelta:"88% of budget · 12 days left in month", spendClass:"warn",
+          toolsValue:"42", toolsSub:"33 sanctioned · 9 shadow",
+          overValue:"5 tools", overCritical:"2", overWarning:"3",
+          usersValue:"1,240", staff:"/ 2,100 staff", usersDelta:"59% org adoption", usersClass:"ok" },
+    last7:{ spendValue:"$41.6k", spendOf:"≈ $49k, 7-day pace", spendDelta:"Pace is running ahead of the monthly budget track", spendClass:"warn",
+          toolsValue:"42", toolsSub:"33 sanctioned · 9 shadow",
+          overValue:"5 tools", overCritical:"2", overWarning:"3",
+          usersValue:"690", staff:"/ 2,100 staff", usersDelta:"33% weekly reach", usersClass:"neutral" },
+    last90:{ spendValue:"$596.3k", spendOf:"≈ $630k, 90-day pace", spendDelta:"95% of 90-day pace · trending up", spendClass:"warn",
+          toolsValue:"45", toolsSub:"35 sanctioned · 10 shadow",
+          overValue:"5 tools", overCritical:"2", overWarning:"3",
+          usersValue:"1,510", staff:"/ 2,100 staff", usersDelta:"72% reach over 90 days", usersClass:"ok" }
+  };
+
+  var state = { range:"mtd", dept:"all", attnExpanded:false, attnCategory:"all",
+    selectedDept:null, chart2Visible:{ sanctioned:true, shadow:true } };
+
+  function el(id){ return document.getElementById(id); }
+
+  function renderKPI(){
+    var k = KPI[state.range], lab = RANGE_LABELS[state.range];
+    el("kpiSpendLabel").textContent = lab.spendLabel;
+    el("kpiSpendValue").innerHTML = k.spendValue + ' <small id="kpiSpendOf">' + k.spendOf + '</small>';
+    el("kpiSpendDelta").textContent = k.spendDelta;
+    el("kpiSpendDelta").className = "delta " + k.spendClass;
+    el("kpiOverValue").textContent = k.overValue;
+    el("kpiOverSub").innerHTML = '<span style="color:var(--critical); font-weight:700;">' + k.overCritical + ' over</span>' +
+      '<span style="color:var(--muted); font-weight:500;"> · </span>' +
+      '<span style="color:var(--warning); font-weight:700;">' + k.overWarning + ' approaching</span>';
+    el("kpiUsersLabel").textContent = lab.usersLabel;
+    el("kpiUsersValue").innerHTML = k.usersValue + ' <small id="kpiStaff">' + k.staff + '</small>';
+    el("kpiUsersDelta").textContent = k.usersDelta;
+    el("kpiUsersDelta").className = "delta " + k.usersClass;
+  }
+
+  // Shared, one-line explanation of what a full drill-down would additionally surface — reused
+  // verbatim for every table row and every Needs Attention item instead of bespoke per-row text,
+  // since authoring unique content per row is what made the old drawer expensive, not the click itself.
+  var DRILLDOWN_NOTE = "Would additionally show login method, approval record, spend/usage trend, and a recommended action here — not built as a live interaction for this exercise.";
+
+  // Abbreviated $ formatting matching the KPI row's own convention ("$184.2k", "$210k")
+  // instead of the table's previous full-number format ("$42,300") — used now that every
+  // row is frozen to its MTD figures (see renderTable() below).
+  function fmtK(n){
+    if(n === null || n === undefined) return "";
+    if(n === 0) return "$0";
+    var k = Math.round(n / 100) / 10;
+    return "$" + (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k";
+  }
+
+  function renderTable(){
+    var tbody = el("toolsTbody");
+    var rows = TOOLS.filter(function(t){ return state.dept === "all" || t.dept === state.dept; });
+    // Frozen to "of 42" always (KPI.mtd.toolsValue) — the table no longer varies by date
+    // range, so the count badge shouldn't imply a windowed total either. See decisions.md.
+    el("toolCount").textContent = rows.length + " of " + KPI.mtd.toolsValue + " shown";
+    if(rows.length === 0){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No tools found for this department.</td></tr>';
+      return;
+    }
+    var html = "";
+    rows.forEach(function(t){
+      var s = statusFor(t);
+      var g = governanceFor(t);
+      var u = utilFor(t);
+      var v = velocityFor(t);
+      // Always current MTD — the table is a point-in-time status view (Status/Governance are
+      // inherently point-in-time), not a windowed report, so it doesn't react to the date-range
+      // filter at all; only the department filter (state.dept, above) applies here. See decisions.md.
+      var period = t.mtd;
+      var utilCell = u ? (u.pct + '%<span class="pct-bar"><i style="width:' + u.pct + '%;background:' + u.color + ';"></i></span>') : "—";
+      var trendCell = "—";
+      if(v){
+        var vArrow = v.dir === "up" ? "▲" : v.dir === "down" ? "▼" : "→";
+        var vCls = v.dir === "up" ? "warning" : v.dir === "down" ? "good" : "neutral";
+        trendCell = '<span class="trend-cell ' + vCls + '">' + vArrow + ' ' + (v.pct > 0 ? "+" : "") + v.pct + '%</span>';
+      }
+      var spendCell = fmtK(period.spend) + (t.cardSpend ? ' <span style="color:var(--muted);font-size:11px;">(card spend)</span>' : t.freeTier ? ' <span style="color:var(--muted);font-size:11px;">(free tier)</span>' : "");
+      var limitCell = t.limit === null ? "No limit set" : fmtK(t.limit);
+      var spendLimitCell = spendCell + ' / ' + limitCell + (s.pctText !== "—" ? ' · ' + s.pctText : "");
+      html += '<tr class="tool-row" tabindex="0" role="button" aria-expanded="false" aria-label="Show what a drill-down would surface for ' + t.name + '">' +
+        '<td><span class="tool-name">' + t.name + '</span><span class="tool-owner">' + t.ownerLine + '</span></td>' +
+        '<td><span class="pill ' + s.cls + '">' + s.text + '</span></td>' +
+        '<td><span class="pill ' + g.cls + '">' + g.text + '</span></td>' +
+        '<td>' + period.usersText + '</td>' +
+        '<td>' + utilCell + '</td>' +
+        '<td>' + trendCell + '</td>' +
+        '<td>' + spendLimitCell + '</td>' +
+        '<td class="row-chevron">›</td>' +
+        '</tr>' +
+        '<tr class="tool-note-row"><td colspan="8">' + DRILLDOWN_NOTE + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // ---------- needs-attention feed ----------
+  // Built from the same TOOLS/DETAILS/statusFor logic as the table — no separate data source,
+  // so the panel can never disagree with the row it points to.
+  // Two org-wide anomaly items (not tied to a single tool) supply the "significant change" category
+  // the per-tool threshold logic can't produce on its own.
+  var ANOMALIES = [
+    { dept:"all", tag:"Adoption anomaly", cat:"anomaly", sev:"info",
+      title:"Shadow AI adoption, org-wide",
+      desc:"+185% since March vs. +56% for sanctioned tools — shadow adoption is growing 3× faster.",
+      action:"View trend", scrollTo:"chart2" },
+    { dept:"Marketing", tag:"Spend anomaly", cat:"anomaly", sev:"info",
+      title:"Marketing — shadow spend ratio",
+      desc:"44% of the department's AI spend is unsanctioned, the highest of any department.",
+      action:"View chart", scrollTo:"chart3" }
+  ];
+  var SEV_ORDER = { critical:0, warning:1, info:2 };
+  // category axis (threshold/governance/anomaly) is separate from severity: severity drives
+  // urgency/color/sort order, category only feeds the filter chips below, so severity-first
+  // ordering never gets reshuffled by filtering (see D-21 follow-up on why section headers
+  // were rejected in favor of chips).
+
+  function buildAttentionItems(){
+    var items = [];
+    TOOLS.forEach(function(t){
+      if(state.dept !== "all" && t.dept !== state.dept && t.dept !== "IT / Ops") return;
+      var s = statusFor(t), d = DETAILS[t.key];
+      if(s.cls === "critical"){
+        items.push({ sev:"critical", tag:"Over limit", cat:"threshold", key:t.key,
+          title:t.name, desc:t.mtd.spendText + " of " + t.limitText + " — " + s.pctText + " of monthly limit.",
+          action:"Review" });
+      } else if(t.limit === null && d && d.flag){
+        items.push({ sev:"warning", tag:"Shadow", cat:"governance", key:t.key,
+          title:t.name, desc:d.approval.split(".")[0] + ".", action:"Review" });
+      } else if(s.cls === "warning" && t.limit !== null){
+        items.push({ sev:"warning", tag:"Approaching limit", cat:"threshold", key:t.key,
+          title:t.name, desc:t.mtd.spendText + " of " + t.limitText + " — " + s.pctText + " of monthly limit, " + (d && d.note ? d.note.split(" — ")[1] || d.note : "trending up") ,
+          action:"Review" });
+      }
+    });
+    ANOMALIES.forEach(function(a){
+      if(state.dept !== "all" && a.dept !== "all" && a.dept !== state.dept) return;
+      items.push(a);
+    });
+    if(state.attnCategory !== "all"){
+      items = items.filter(function(it){ return it.cat === state.attnCategory; });
+    }
+    items.sort(function(a,b){ return SEV_ORDER[a.sev] - SEV_ORDER[b.sev]; });
+    return items;
+  }
+
+  var ATTN_VISIBLE = 4; // top items shown before collapsing the rest behind "+N more"
+
+  function attnRowHtml(it){
+    return '<div class="attn-row" tabindex="0" role="button" aria-expanded="false" aria-label="Show what a drill-down would surface for ' + it.title + '">' +
+      '<span class="attn-sev ' + it.sev + '"></span>' +
+      '<div class="attn-body">' +
+        '<div class="attn-line1"><span class="attn-tag ' + it.sev + '">' + it.tag + '</span><span class="attn-tool">' + it.title + '</span></div>' +
+        '<div class="attn-desc">' + it.desc + '</div>' +
+      '</div>' +
+      '<span class="attn-action">' + it.action + ' →</span>' +
+      '<div class="attn-note">' + DRILLDOWN_NOTE + '</div>' +
+    '</div>';
+  }
+
+  function renderAttentionChips(){
+    document.querySelectorAll("#attnChips .attn-chip").forEach(function(chip){
+      chip.classList.toggle("active", chip.getAttribute("data-cat") === state.attnCategory);
+    });
+  }
+  function renderAttention(){
+    renderAttentionChips();
+    var items = buildAttentionItems();
+    el("attnCount").textContent = items.length + (items.length === 1 ? " item" : " items");
+    if(items.length === 0){
+      el("attnList").innerHTML = '<div class="attn-empty">Nothing needs attention for this department right now.</div>';
+      return;
+    }
+    var shown = state.attnExpanded ? items : items.slice(0, ATTN_VISIBLE);
+    var hidden = items.slice(ATTN_VISIBLE);
+    var html = shown.map(attnRowHtml).join("");
+    if(hidden.length > 0 && !state.attnExpanded){
+      var counts = { critical:0, warning:0, info:0 };
+      hidden.forEach(function(it){ counts[it.sev]++; });
+      var parts = [];
+      if(counts.critical) parts.push(counts.critical + " critical");
+      if(counts.warning) parts.push(counts.warning + " warning");
+      if(counts.info) parts.push(counts.info + " info");
+      html += '<div class="attn-more" tabindex="0" role="button" aria-label="Show ' + hidden.length + ' more items">' +
+        '+' + hidden.length + ' more issue' + (hidden.length === 1 ? "" : "s") + ' (' + parts.join(", ") + ')' +
+      '</div>';
+    }
+    el("attnList").innerHTML = html;
+  }
+  function handleAttentionActivate(row){
+    if(row.classList.contains("attn-more")){
+      state.attnExpanded = true;
+      renderAttention();
+      return;
+    }
+    var note = row.querySelector(".attn-note");
+    if(note){
+      var open = note.classList.toggle("open");
+      row.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+  }
+
+  // toggles the sibling .tool-note-row that renderTable() always renders directly after
+  // each .tool-row — same one-line-reveal pattern as the Needs Attention items.
+  function toggleToolRow(row){
+    var note = row.nextElementSibling;
+    if(!note || !note.classList.contains("tool-note-row")) return;
+    var open = note.classList.toggle("open");
+    row.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function renderAll(){ renderKPI(); renderTable(); renderAttention(); }
+
+  // ---------- events ----------
+  document.querySelectorAll('.filter[data-range]').forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll('.filter[data-range]').forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      state.range = btn.getAttribute("data-range");
+      renderAll();
+    });
+  });
+
+  el("deptFilter").addEventListener("change", function(e){
+    state.dept = e.target.value;
+    state.attnExpanded = false;
+    state.attnCategory = "all";
+    renderTable();
+    renderAttention();
+    // visual confirmation that these two components (and only these two — the
+    // filter is deliberately not wired to the charts) responded to the filter
+    var isScoped = state.dept !== "all";
+    el("tableWrap").classList.toggle("filter-scoped", isScoped);
+    el("attnPanel").classList.toggle("filter-scoped", isScoped);
+  });
+
+  el("attnChips").addEventListener("click", function(e){
+    var chip = e.target.closest(".attn-chip");
+    if(!chip) return;
+    state.attnCategory = chip.getAttribute("data-cat");
+    state.attnExpanded = false;
+    renderAttention();
+  });
+
+  el("attnList").addEventListener("click", function(e){
+    var row = e.target.closest(".attn-row, .attn-more");
+    if(row) handleAttentionActivate(row);
+  });
+  el("attnList").addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){
+      var row = e.target.closest(".attn-row, .attn-more");
+      if(row){ e.preventDefault(); handleAttentionActivate(row); }
+    }
+  });
+
+  el("toolsTbody").addEventListener("click", function(e){
+    var row = e.target.closest(".tool-row");
+    if(row) toggleToolRow(row);
+  });
+  el("toolsTbody").addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){
+      var row = e.target.closest(".tool-row");
+      if(row){ e.preventDefault(); toggleToolRow(row); }
+    }
+  });
+
+  el("deptList").addEventListener("click", function(e){
+    var btn = e.target.closest(".dept-item");
+    if(btn) selectDept(btn.getAttribute("data-dept") || null);
+  });
+
+  document.querySelectorAll('.legend-toggle input[data-series]').forEach(function(cb){
+    cb.addEventListener("change", function(){
+      state.chart2Visible[cb.getAttribute("data-series")] = cb.checked;
+      renderChart2Visibility();
+    });
+  });
+
+  renderSpendChart();
+  renderSpendDataTable();
+  renderDeptList();
+  renderSpendCaption();
+  renderAll();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ---------- TOC active-section highlighting ----------
+  var links = document.querySelectorAll(".toc-link");
+  if(!links.length) return;
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute("data-toc")] = a; });
+
+  var sections = ["framing","part-1","part-2","part-3"]
+    .map(function(id){ return document.getElementById(id); })
+    .filter(Boolean);
+
+  function setActive(id){
+    links.forEach(function(a){ a.classList.remove("active"); });
+    if(byId[id]) byId[id].classList.add("active");
+  }
+
+  if("IntersectionObserver" in window){
+    var current = sections.length ? sections[0].id : null;
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting) current = entry.target.id;
+      });
+      if(current) setActive(current);
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+    sections.forEach(function(el){ observer.observe(el); });
+  }
+})();
+</script>
